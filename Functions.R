@@ -5,7 +5,7 @@ library(tidyr)
 options(scipen=999)
 
 
-
+# STILL NEEDS SOME WORK
 ChangeClasses <- function(df) {
   # Identifies columns starting with X and changes their class to numeric.
   #
@@ -16,9 +16,31 @@ ChangeClasses <- function(df) {
   #   df: MSDial dataframed with modified sample column classes.
   #
   #col.test <- grepl("^X", names(df))
-  for (i in col(10:ncol(df))) {
+  for (i in c(10:ncol(df))) {
     df[, i] <- as.numeric(as.character(df[, i]))
   }
+  return(df)
+}
+
+RearrangeDatasets <- function(df, parameter) {
+  # Shortcut for altering multiple datasets using the tidyr::gather() function.
+  #
+  # Args
+  #   df: MSDial dataframe with first n empty rows removed.
+  #   parameter: Table value. This parameter will become the column name when 
+  #              changed to long format.
+  #
+  # Returns
+  #   df: MSDial dataframe, changed to long format and with a custom-named value column.
+  df <- df %>%
+    tidyr::gather(
+      key = "Replicate.Name",
+      value = "parameter",
+      starts_with("X")) %>%
+    select(Replicate.Name, parameter, everything())
+  
+  names(df)[2] <- parameter
+  
   return(df)
 }
 
@@ -130,18 +152,7 @@ IdentifyRunTypes <- function(msdial.file) {
   return(run.type)
 }
 
-RearrangeDatasets <- function(df, parameter) {
-  df <- df %>%
-    tidyr::gather(
-      key = "Replicate.Name",
-      value = "parameter",
-      starts_with("X")) %>%
-    select(Replicate.Name, parameter, everything())
-  
-  names(df)[2] <- parameter
-  
-  return(df)
-}
+
 
 StandardizeMetabolites <- function(df) {
   df.standardized <- df %>%
