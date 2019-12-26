@@ -31,7 +31,6 @@ for (df in seq_along(headers.set)) {
 }
 
 # Change variable classes -------------------------------------------------
-
 classes.changed <- lapply(names(headers.set), function(x) ChangeClasses(headers.set[[x]]))
 names(classes.changed) <- runs
 
@@ -41,7 +40,6 @@ list2env(classes.changed, globalenv())
 # Change dataset orientation from wide to long -------------------------------------------------
 
 # Positive
-
 Area.pos <- RearrangeDatasets(Area_HILICPos_Example, parameter = "Area.Value")
 Mz.pos   <- RearrangeDatasets(Mz_HILICPos_Example, parameter = "Mz.Value")
 RT.pos   <- RearrangeDatasets(RT_HILICPos_Example, parameter = "RT.Value")
@@ -49,7 +47,6 @@ SN.pos   <- RearrangeDatasets(SN_HILICPos_Example, parameter = "SN.Value")
 
 
 # Negative
-
 Area.neg <- RearrangeDatasets(Area_HILICNeg_Example, parameter = "Area.Value")
 Mz.neg   <- RearrangeDatasets(Mz_HILICNeg_Example, parameter = "Mz.Value")
 RT.neg   <- RearrangeDatasets(RT_HILICNeg_Example, parameter = "RT.Value")
@@ -85,10 +82,3 @@ csvFileName <- paste("data_processed/MSDial_combined_", currentDate, ".csv", sep
 write.csv(combined.final, csvFileName, row.names = FALSE)
 
 rm(list = ls())
-
-
-
-
-
-
-

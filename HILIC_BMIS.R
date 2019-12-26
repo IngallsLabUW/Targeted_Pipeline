@@ -1,6 +1,8 @@
 # Things to Return --------------------------------------------------------
 source("Functions.R")
 
+## OUTPUT IS MESSED UP WITH SOME NAS, CHECK WHYYYYYYYYY
+
 
 # IS_inspectPlot (plot to make sure there aren't any internal standards we should kick out)
 # QuickReport (% that picked BMIS, with cut off values)
@@ -45,7 +47,6 @@ HILIC.QC <- HILIC.QC %>%
   filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
 
 
-
 # Match QC'd HILIC data with Internal Standards list -----------------------------------------------------------------
 HILIC.withIS <- HILIC.QC %>%
   filter(Metabolite.Name %in% Internal.Standards$Compound.Name)
@@ -61,7 +62,6 @@ HILIC.IS.data <- HILIC.withIS %>%
 #filter(!MassFeature == "Guanosine Monophosphate, 15N5")
 
 # Add injection volume -----------------------------------------------------------------
-# SHOULD THIS GO AT THE TOP
 SampKey <- SampKey.all %>%
   filter(Replicate.Name %in% HILIC.IS.data$Replicate.Name) %>% 
   select(Replicate.Name, Bio.Normalization) %>%
@@ -174,7 +174,6 @@ HILIC.poodat <- left_join(HILIC.poodat, HILIC.poodat %>%
 
 # Adds a column that has the BMIS, not just Poo.Picked.IS
 # Changes the FinalBMIS to inject_volume if its no good
-
 HILIC.fixedpoodat <- HILIC.poodat %>%
   filter(MIS == Poo.Picked.IS) %>% 
   mutate(FinalBMIS = ifelse(accept_MIS == "FALSE", "Inj_vol", Poo.Picked.IS)) %>%

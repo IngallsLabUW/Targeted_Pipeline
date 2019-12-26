@@ -1,0 +1,21 @@
+Internal_Standards,Matched_Compounds,Concentration_nM
+"DL-Alanine, D3",Alanine,5000
+"DL-Histidine, 15N",Histidine,3600
+"DL-Proline, D7",Proline,1000
+"DL-Valine, D8",,1000
+"L-Isoleucine, 15N",Leucine,500
+"L-Methionine, D3",Methionine,1000
+"Adenosine Monophosphate, 15N5",AMP,5000
+"Isethionic Acid, 13C2",Isethionic Acid,500
+"L-Cysteic Acid, D3",,
+"Succinic Acid, D4",,
+"Sulfoacetic Acid, 13C2",,
+"Sulfolactic Acid, 13C3",Sulfolactic Acid,1000
+"Taurine, D4",Taurine,1000
+"Thiamine Hydrochloride, 13C3",,
+"Pyridoxal, D3",,
+"L-Phenylalanine, D8",Phenylalanine,100
+"L-Tryptophan, D3",Tryptophan,100
+"Tryptamine Hydrochloride, D4",,
+"Riboflavin-dioxopyrimidine, 13C4, 15N2",Vitamin B2,100
+"Indole 3 Acetic Acid, D5",,
