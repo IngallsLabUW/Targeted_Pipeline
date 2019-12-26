@@ -1,7 +1,6 @@
 source("functions.R")
 
 # Import all MSDial files --------------------------------------------------
-
 filenames <- RemoveCsv(list.files(path = 'data_raw', pattern = '*.csv'))
 
 for (i in filenames) {
@@ -9,15 +8,11 @@ for (i in filenames) {
   assign(i, read.csv(filepath, stringsAsFactors = FALSE))
 }
 
-
 columns.to.drop <- c('Average.Rt.min.', 'Formula', 'Ontology', 'INCHIKEY', 'SMILES', 'Isotope.tracking.parent.ID', 'Isotope.tracking.weight.number',
 'MS1.isotopic.spectrum', 'MS.MS.spectrum', 'Average.Mz', 'Post.curation.result', 'Fill..', 'Annotation.tag..VS1.0.', 'RT.matched',
 'm.z.matched', 'MS.MS.matched', 'Manually.modified', 'Total.score', 'RT.similarity', 'Dot.product', 'Reverse.dot.product', 'Fragment.presence..')
 
 # Set header, filter unknowns ---------------------------------------
-# Known issues: choosing which columns remain by hand.
-# Also manually changing classes by choosing "10" rather than a filter.
-
 runs <- grep("hilic", names(.GlobalEnv), value = TRUE, ignore.case = TRUE)
 runlist <- do.call("list", mget(runs))
 

@@ -5,7 +5,47 @@ library(tidyr)
 options(scipen=999)
 
 
+
+ChangeClasses <- function(df) {
+  # Identifies columns starting with X and changes their class to numeric.
+  #
+  # Args
+  #   df: MSDial dataframe reorganized to drop all empty rows at the top.
+  #
+  # Returns
+  #   df: MSDial dataframed with modified sample column classes.
+  #
+  #col.test <- grepl("^X", names(df))
+  for (i in col(10:ncol(df))) {
+    df[, i] <- as.numeric(as.character(df[, i]))
+  }
+  return(df)
+}
+
+RemoveCsv <- function(full.filepaths) {
+  # Gathers all files in given directory and drops the csv extension.
+  #
+  # Args
+  #   full.filepaths: list of files in a directory matching given patterns.
+  #
+  # Returns
+  #   no.path: list of files, with filepath and csv extension removed.
+  #
+  no.path <- substr(full.filepaths, 1, nchar(full.filepaths)-4)
+  no.ID <-   gsub("\\_.*","", no.path)
+  
+  return(no.path)
+}
+
 SetHeader <- function(df) {
+  # Test for blank rows in MSDial output, and filter them out. Replace column names with syntactically correct headers.
+  #
+  # Args
+  #   df: MSDial dataframe. 
+  #
+  # Returns
+  #   df: MSDial dataframe, first n blank rows removed and headers set.
+  #
   df <- df[!(is.na(df[1]) | df[1] == ""), ]
   colnames(df) <- make.names(as.character(unlist(df[1,])))
   df <- df[-1, ]
@@ -13,19 +53,31 @@ SetHeader <- function(df) {
   return(df)
 }
 
-RemoveCsv <- function(full.filepaths) {
-  no.path <- substr(full.filepaths, 1, nchar(full.filepaths)-4)
-  no.ID <-   gsub("\\_.*","", no.path)
+
+
+
+
+
+CheckStandards <- function (df) {
+  # Mutates a new column identifying standard run types, then prints number of unique run types.
+  #
+  # Args
+  #   df: Dataset of containing a Replicate.Name column, pre-filtered to include only standard runs.
+  #
+  # Returns
+  #   df.checked: Dataset with a new column describing run types, and a printed message stating how many 
+  #               unique types there are.
+  #
+  df.checked <- df %>%
+    mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "StdsMix|InH2O"), "Standards", "Water"),
+                        Matrix = ifelse(str_detect(Replicate.Name, "InMatrix"), "Matrix", "Water"), sep = "_"))
   
-  return(no.path)
+  print(paste("Number of standard run types:", length(unique(df.checked$Type))))
+  print(unique(df.checked$Type))
+  
+  return(df.checked)
 }
 
-ChangeClasses <- function(df) {
-  for (i in c(10:ncol(df))) {
-    df[, i] <- as.numeric(as.character(df[, i]))
-  }
-  return(df)
-}
 
 StandardizeVariables <- function(df) {
   if (c("ReplicateName", "AreaValue", "MZValue", "RTValue", "SNValue") %in% colnames(df))
@@ -121,25 +173,7 @@ IdentifyDuplicates <- function(df) {
   return(duplicates)
 }
 
-CheckStandards <- function (df) {
-  # Mutates a new column identifying standard run types, then prints number of unique run types.
-  #
-  # Args
-  #   df: Dataset of containing a Replicate.Name column, pre-filtered to include only standard runs.
-  #
-  # Returns
-  #   df.checked: Dataset with a new column describing run types, and a printed message stating how many 
-  #               unique types there are.
-  #
-  df.checked <- df %>%
-    mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "StdsMix|InH2O"), "Standards", "Water"),
-                        Matrix = ifelse(str_detect(Replicate.Name, "InMatrix"), "Matrix", "Water"), sep = "_"))
-  
-  print(paste("Number of standard run types:", length(unique(df.checked$Type))))
-  print(unique(df.checked$Type))
-  
-  return(df.checked)
-}
+
 
 # Old Functions -----------------------------------------------------------
 

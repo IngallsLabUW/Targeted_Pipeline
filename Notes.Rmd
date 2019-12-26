@@ -1,0 +1,24 @@
+---
+title: "TODO notes"
+author: "RLionheart"
+date: "12/26/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## TODO 
+
+## Pitfalls and possible issues
+*Import*
+1. Figure out how to change classes using col.test, rather than just choosing 10.
+HILIC?
+- Positive + negative?
+
+Cyano?
+TQS?
+QE?
+Skyline?
+MSDial?
