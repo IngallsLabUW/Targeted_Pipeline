@@ -1,8 +1,6 @@
 # Things to Return --------------------------------------------------------
 source("Functions.R")
 
-## OUTPUT IS MESSED UP WITH SOME NAS, CHECK WHYYYYYYYYY
-
 
 # IS_inspectPlot (plot to make sure there aren't any internal standards we should kick out)
 # QuickReport (% that picked BMIS, with cut off values)
@@ -10,27 +8,39 @@ source("Functions.R")
 # BMIS_normalizedData (tibble with the info you actually want!)
 
 # Set parameters -----------------------------------------------------------------
-cut.off <- 0.3 # 30% decrease in RSD of pooled injections, aka improvement cutoff
+cut.off <- 0.4 # 30% decrease in RSD of pooled injections, aka improvement cutoff
 cut.off2 <- 0.1 # RSD minimum
 Column.Type = "HILIC"
-pattern = "QC"
+
+sample.key.pattern = "Sample"
+standards.pattern = "Ingalls"
+QC.pattern = "QC"
 
 # Imports -----------------------------------------------------------------
 # Sample Key
-SampKey.all <- read.csv("data_extras/Sample.Key.EddyTransect.csv") %>%
+filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = sample.key.pattern))
+filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
+
+SampKey.all <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
   rename(Replicate.Name = Sample.Name) %>%
   mutate(Replicate.Name = Replicate.Name %>%
-           str_replace("-","."))
+           str_replace("-",".")) %>%
+  ## MISTAKE FROM SAMP KEY
+  mutate(Replicate.Name = Replicate.Name %>%
+           str_replace("180821_Poo_MesoScopeQC_1a","180821_Poo_MesoScopeQC_1"))
+
 
 # Internal Standards
-Internal.Standards <- read.csv("data_extras/Ingalls_Lab_Standards.csv") %>%
+filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = standards.pattern))
+filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
+
+Internal.Standards <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
   filter(Column == Column.Type) %>%
   filter(Compound.Type == "Internal Standard")
-
 Internal.Standards$Compound.Name <- TrimWhitespace(Internal.Standards$Compound.Name)
 
 # QC'd HILIC output
-filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = pattern))
+filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = QC.pattern))
 filepath <- file.path('data_processed', paste(filename, ".csv", sep = ""))
 
 HILIC.QC <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
@@ -40,8 +50,13 @@ HILIC.QC <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = F
   mutate(Replicate.Name = Replicate.Name %>%
            str_replace("-",".")) 
 
-
+# Identify duplicates and decide which to remove -----------------------------------------------------------------
 HILICS.duplicates <- IdentifyDuplicates(HILIC.QC)
+
+duplicates.testing <- HILIC.QC %>%
+  filter(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name) %>%
+  group_by(Metabolite.Name, Column) %>%
+  summarize(mean(Area.with.QC, na.rm = TRUE))
 
 HILIC.QC <- HILIC.QC %>%
   filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
@@ -58,8 +73,8 @@ HILIC.NoIS <- HILIC.QC %>%
 HILIC.IS.data <- HILIC.withIS %>%
   select(Replicate.Name, Metabolite.Name, Area.with.QC) %>%
   mutate(Mass.Feature = Metabolite.Name) %>%
-  select(-Metabolite.Name) 
-#filter(!MassFeature == "Guanosine Monophosphate, 15N5")
+  select(-Metabolite.Name) %>%
+  filter(!Mass.Feature == "Guanosine Monophosphate, 15N5")
 
 # Add injection volume -----------------------------------------------------------------
 SampKey <- SampKey.all %>%
@@ -69,12 +84,10 @@ SampKey <- SampKey.all %>%
          Area.with.QC = Bio.Normalization) %>%
   select(Replicate.Name, Area.with.QC, Mass.Feature)
 
+
 # Create Internal standard data to identify problematic compounds/replicates-----------------------------------------------------------------
 HILIC.IS.data <- rbind(HILIC.IS.data, SampKey) %>%
-  filter(!str_detect(Replicate.Name, "dda"))
-# HILIC.IS.data[] <- lapply(HILIC.IS.data, gsub, pattern = 'Neg|Pos', replacement = '')
-
-# Here is where we would hypothetically remove troublesome compounds.
+  filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE)))
 
 
 # Identify internal standards without an Area, i.e. any NA values.
@@ -92,27 +105,23 @@ IS.Raw.Area.Plot <- ggplot(HILIC.IS.data, aes(x = Replicate.Name, y = Area.with.
 print(IS.Raw.Area.Plot)
 
 
-# Edit data so names match-----------------------------------------------------------------
+# Edit data so names match, test that names are equal across sample sets-----------------------------------------------------------------
 HILIC.long  <- HILIC.NoIS %>%
   rename(Mass.Feature = Metabolite.Name) %>%
   select(Replicate.Name, Mass.Feature, Area.with.QC) %>%
-  filter(!str_detect(Replicate.Name, "dda")) %>%
+  filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
   arrange(Replicate.Name)
 
-# Test that names are equal across sample sets-----------------------------------------------------------------
 test_isdata <- as.data.frame(sort(unique(HILIC.IS.data$Replicate.Name)), stringsAsFactors = FALSE)
 test_long <- as.data.frame(sort(unique(HILIC.long$Replicate.Name)), stringsAsFactors = FALSE)
 identical(test_isdata[[1]], test_long[[1]])
 
 # Caluclate mean values for each Internal Standard----------------------------------------------------------------
 HILIC.IS.means <- HILIC.IS.data %>%
-  filter(!grepl("_Blk_", Replicate.Name)) %>%
   mutate(Mass.Feature = as.factor(Mass.Feature)) %>%
   group_by(Mass.Feature) %>%
   summarise(Average.Area = mean(as.numeric(Area.with.QC), na.rm = TRUE)) %>%
   mutate(Mass.Feature = as.character(Mass.Feature))
-
-HILIC.IS.means[is.na(HILIC.IS.means)] <- NA
 
 
 # Normalize to each internal Standard----------------------------------------------------------------
@@ -169,11 +178,10 @@ HILIC.poodat <- left_join(HILIC.poodat, HILIC.poodat %>%
   mutate(percent.Change = del_RSD/Orig_RSD) %>%
   mutate(accept_MIS = (percent.Change > cut.off & Orig_RSD > cut.off2))
 
-
 # Change the BMIS to "Inj_vol" if the BMIS is not an acceptable----------------------------------------------------------------
 
 # Adds a column that has the BMIS, not just Poo.Picked.IS
-# Changes the FinalBMIS to inject_volume if its no good
+# Changes the FinalBMIS to inject_volume if it's no good
 HILIC.fixedpoodat <- HILIC.poodat %>%
   filter(MIS == Poo.Picked.IS) %>% 
   mutate(FinalBMIS = ifelse(accept_MIS == "FALSE", "Inj_vol", Poo.Picked.IS)) %>%
@@ -187,9 +195,9 @@ HILIC.newpoodat <- HILIC.poodat %>%
 Try <- HILIC.newpoodat %>%
   filter(FinalBMIS != "Inj_vol")
 
-QuickReport <- print(paste("% of MFs that picked a BMIS",
-                           length(Try$Mass.Feature) / length(HILIC.newpoodat$Mass.Feature),
-                           "RSD improvement cutoff", cut.off,
+QuickReport <- print(paste("Percent of Mass Features that picked a BMIS:",
+                           length(Try$Mass.Feature) / length(HILIC.newpoodat$Mass.Feature), "|",
+                           "RSD improvement cutoff", cut.off, "|",
                            "RSD minimum cutoff", cut.off2,
                            sep = " "))
 
@@ -200,18 +208,17 @@ IS_toISdat <- HILIC.mydata.new %>%
   select(Mass.Feature, MIS, Adjusted.Area, type) %>%
   filter(type == "Smp") %>%
   group_by(Mass.Feature, MIS) %>%
-  summarise(RSD_ofSmp = sd(Adjusted.Area, na.rm = TRUE)/mean(Adjusted.Area, na.rm = TRUE)) %>%
+  summarize(RSD_of_Smp = sd(Adjusted.Area, na.rm = TRUE) / mean(Adjusted.Area, na.rm = TRUE)) %>%
   left_join(HILIC.poodat %>% select(Mass.Feature, MIS, RSD_ofPoo, accept_MIS))
 
 injectONlY_toPlot <- IS_toISdat %>%
   filter(MIS == "Inj_vol")
 
-
 ISTest_plot <- ggplot() +
-  geom_point(dat = IS_toISdat, shape = 21, color = "black", size = 2,aes(x = RSD_ofPoo, y = RSD_ofSmp, fill = accept_MIS)) +
-  scale_fill_manual(values=c("white","dark gray")) +
-  geom_point(dat = injectONlY_toPlot, aes(x = RSD_ofPoo, y = RSD_ofSmp), size = 3) +
-  facet_wrap(~ Mass.Feature)
+  geom_point(dat = IS_toISdat, shape = 21, color = "black", size = 2, aes(x = RSD_ofPoo, y = RSD_of_Smp, fill = accept_MIS)) +
+  geom_point(dat = injectONlY_toPlot, aes(x = RSD_ofPoo, y = RSD_of_Smp), size = 3) +
+  facet_wrap(~ Mass.Feature) +
+  ggtitle(paste("Results of BMIS Cutoff:", cut.off, "RSD decrease,", cut.off2, "RSD minimum."))
 print(ISTest_plot)
 
 
@@ -220,8 +227,7 @@ print(ISTest_plot)
 ## original
 HILIC.BMIS_normalizedData <- HILIC.newpoodat %>% select(Mass.Feature, FinalBMIS, Orig_RSD, FinalRSD) %>%
   left_join(HILIC.mydata.new, by = "Mass.Feature") %>%
-  filter(MIS == FinalBMIS) %>%
-  unique()
+  filter(MIS == FinalBMIS) 
 
 currentDate <- Sys.Date()
 csvFileName <- paste("data_processed/BMIS_Output_", currentDate, ".csv", sep = "")

@@ -1,4 +1,4 @@
-source("functions.R")
+source("Functions.R")
 
 # Import all MSDial files --------------------------------------------------
 filenames <- RemoveCsv(list.files(path = 'data_raw', pattern = '*.csv'))
@@ -65,7 +65,6 @@ combined.neg <- Area.neg %>%
   select(Replicate.Name, Column, Area.Value, Mz.Value, RT.Value, SN.Value, everything())
 
 # Standardize dataset --------------------------------------------------
-
 combined.final <- combined.neg %>%
   bind_rows(combined.pos)
 

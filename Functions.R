@@ -1,11 +1,11 @@
 ## Function definitions ##
+library(RCurl)
 library(rlist)
 library(tidyverse)
 library(tidyr)
 options(scipen=999)
 
 
-# STILL NEEDS SOME WORK
 ChangeClasses <- function(df) {
   # Identifies columns starting with X and changes their class to numeric.
   #
@@ -15,8 +15,8 @@ ChangeClasses <- function(df) {
   # Returns
   #   df: MSDial dataframed with modified sample column classes.
   #
-  #col.test <- grepl("^X", names(df))
-  for (i in c(10:ncol(df))) {
+  col.test <- grepl("^X", names(df))
+  for (i in which(col.test == TRUE)) {
     df[, i] <- as.numeric(as.character(df[, i]))
   }
   return(df)
@@ -74,10 +74,6 @@ SetHeader <- function(df) {
   
   return(df)
 }
-
-
-
-
 
 
 CheckStandards <- function (df) {
@@ -151,7 +147,6 @@ IdentifyRunTypes <- function(msdial.file) {
   print(paste("Your runtypes are:", toString(unique(run.type))))
   return(run.type)
 }
-
 
 
 StandardizeMetabolites <- function(df) {
