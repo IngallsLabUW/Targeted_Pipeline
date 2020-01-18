@@ -1,5 +1,4 @@
 ## Function definitions ##
-library(RCurl)
 library(rlist)
 library(tidyverse)
 library(tidyr)
@@ -20,6 +19,26 @@ ChangeClasses <- function(df) {
     df[, i] <- as.numeric(as.character(df[, i]))
   }
   return(df)
+}
+
+CheckStandards <- function (df) {
+  # Mutates a new column identifying standard run types, then prints number of unique run types.
+  #
+  # Args
+  #   df: Dataset of containing a Replicate.Name column, pre-filtered to include only standard runs.
+  #
+  # Returns
+  #   df.checked: Dataset with a new column describing run types, and a printed message stating how many 
+  #               unique types there are.
+  #
+  df.checked <- df %>%
+    mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "StdsMix|InH2O"), "Standards", "Water"),
+                        Matrix = ifelse(str_detect(Replicate.Name, "InMatrix"), "Matrix", "Water"), sep = "_"))
+  
+  print(paste("Number of standard run types:", length(unique(df.checked$Type))))
+  print(unique(df.checked$Type))
+  
+  return(df.checked)
 }
 
 RearrangeDatasets <- function(df, parameter) {
@@ -75,26 +94,17 @@ SetHeader <- function(df) {
   return(df)
 }
 
-
-CheckStandards <- function (df) {
-  # Mutates a new column identifying standard run types, then prints number of unique run types.
-  #
-  # Args
-  #   df: Dataset of containing a Replicate.Name column, pre-filtered to include only standard runs.
-  #
-  # Returns
-  #   df.checked: Dataset with a new column describing run types, and a printed message stating how many 
-  #               unique types there are.
-  #
-  df.checked <- df %>%
-    mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "StdsMix|InH2O"), "Standards", "Water"),
-                        Matrix = ifelse(str_detect(Replicate.Name, "InMatrix"), "Matrix", "Water"), sep = "_"))
+StandardizeMetabolites <- function(df) {
+  df.standardized <- df %>%
+    mutate(Metabolite.Name = ifelse(str_detect(Metabolite.Name, "Ingalls_"), sapply(strsplit(Metabolite.Name, "_"), `[`, 2), Metabolite.Name)) 
   
-  print(paste("Number of standard run types:", length(unique(df.checked$Type))))
-  print(unique(df.checked$Type))
+  df.standardized$Replicate.Name <- gsub("^.{0,1}", "", df.standardized$Replicate.Name)
   
-  return(df.checked)
+  return(df.standardized)
 }
+
+
+
 
 
 StandardizeVariables <- function(df) {
@@ -149,14 +159,7 @@ IdentifyRunTypes <- function(msdial.file) {
 }
 
 
-StandardizeMetabolites <- function(df) {
-  df.standardized <- df %>%
-    mutate(Metabolite.Name = ifelse(str_detect(Metabolite.Name, "Ingalls_"), sapply(strsplit(Metabolite.Name, "_"), `[`, 2), Metabolite.Name)) 
-  
-  df.standardized$Replicate.Name <- gsub("^.{0,1}", "", df.standardized$Replicate.Name)
-  
-  return(df.standardized)
-}
+
 
 IdentifyDuplicates <- function(df) {
   # Determine which compounds are detected in both positive and negative HILIC runs.

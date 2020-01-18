@@ -1,8 +1,5 @@
 source("Functions.R")
 
-########
-## MIX NEEDS TO BE INCORPORATED
-
 # This code retrieves mol/L from peak areas of targeted compounds.
 # This run is for the MESOSCOPE Eddy Transect HILIC run.
 
