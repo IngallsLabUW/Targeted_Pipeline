@@ -1,21 +1,18 @@
 source("Functions.R")
 
 # This code retrieves mol/L from peak areas of targeted compounds.
-# This run is for the MESOSCOPE Eddy Transect HILIC run.
-
-# Volume of seawater filtered for all TRANSECT samples was 5 L.
 
 # User data ---------------------------------------------------------------
 standards.pattern = "Ingalls"
-BMIS.pattern = "BMIS"
-QC.pattern = "QC"
+BMIS.pattern = "BMIS_Output_HILIC"
+QC.pattern = "QC_Output_HILIC"
 names.pattern = "Names"
 Column.Type = "HILIC"
 
 
 Dilution.Factor = 2
 Injection.Volume = 400 # nanomoles
-Volume.Filtered = 10 # liters
+Volume.Filtered = 5 # liters
 
 
 # Import standards and filter NAs ---------------------------------------------------------------
@@ -102,17 +99,17 @@ Full.data.RF.dimensions <- Full.data.RF.dimensions %>%
 
 # Calculate response factor ratios ----------------------------------------
 # Calculate the response factor ratios using (Standards in Matrix - Water in Matrix) / (Standards in water) for each replicate.
-Full.data.RF.ratios <- Full.data.RF %>%
+temp.RF.ratios <- Full.data.RF %>%
   group_by(Metabolite.Name, Type) %>%
   mutate(RF.mean.per_sampleID = mean(RF, na.rm = TRUE)) %>%
   select(Replicate.Name, Metabolite.Name, Type, RF.mean.per_sampleID) %>%
   unique() 
 
-print(paste("NAs or NaNs in the calculatd response factor ratios:", TRUE %in% is.na(Full.data.RF.ratios)))
-metabolite.issues <- Full.data.RF.ratios[is.nan(Full.data.RF.ratios$RF.mean.per_sampleID),]
+print(paste("NAs or NaNs in the calculatd response factor ratios:", TRUE %in% is.na(temp.RF.ratios)))
+metabolite.issues <- temp.RF.ratios[is.nan(temp.RF.ratios$RF.mean.per_sampleID),]
 print(unique(metabolite.issues$Metabolite.Name))
 
-Full.data.RF.ratios <- Full.data.RF.ratios %>%
+Full.data.RF.ratios <- temp.RF.ratios %>%
   filter(!(is.infinite(RF.mean.per_sampleID) | is.nan(RF.mean.per_sampleID))) %>%
   group_by(Metabolite.Name) %>% filter(n() >= 3) %>%
   mutate(RF.ratio = ((RF.mean.per_sampleID[Type == "Standards_Matrix"] - RF.mean.per_sampleID[Type == "Water_Matrix"]) / RF.mean.per_sampleID[Type == "Standards_Water"])) %>%
@@ -120,21 +117,21 @@ Full.data.RF.ratios <- Full.data.RF.ratios %>%
   unique()
 
 # If applicable, supplement data with information from calculated Ingalls QE.RF ratios. 
+missing.RF <- setdiff(unique(temp.RF.ratios$Metabolite.Name), Full.data.RF.ratios$Metabolite.Name)
 
-# test.standards <- Ingalls.Standards %>%l
-#   filter(Metabolite.Name %in% Full.data.RF.ratios$Metabolite.Name) %>%
-#   rename(RF.ratio = QE.RF.ratio) %>%
-#   select(Metabolite.Name, RF.ratio)
-# 
-# Full.data.RF.ratios <- Full.data.RF.ratios %>%
-#   as.data.frame() %>%
-#   filter(!is.na(RF.ratio)) %>%
-#   rbind(test.standards)
+test.standards <- Ingalls.Standards %>%
+  filter(Metabolite.Name %in% missing.RF) %>%
+  rename(RF.ratio = QE.RF.ratio) %>%
+  select(Metabolite.Name, RF.ratio)
 
-
+Full.data.RF.ratios <- Full.data.RF.ratios %>%
+  as.data.frame() %>%
+  rbind(test.standards) %>%
+  filter(!is.na(RF.ratio)) %>%
+  mutate(RF.ratio = as.numeric(RF.ratio))
+  
 # Quantify samples for the BMIS'd dataset ---------------------------------
-BMISd.data <- BMISd.data %>%
-  #separate(Run.Cmpd, sep = " ", into = c("Sample.Name")) %>%
+BMISd.data.filtered <- BMISd.data %>%
   separate(Run.Cmpd, c("Sample.Name"), extra = "drop", fill = "right") %>%
   mutate(Metabolite.Name = Mass.Feature) %>%
   filter(Metabolite.Name %in% Full.data.RF.ratios$Metabolite.Name) %>%
@@ -143,17 +140,16 @@ BMISd.data <- BMISd.data %>%
   select(Metabolite.Name, FinalBMIS, Sample.Name, Adjusted.Area, everything())  
 
 
-## SOMETHING WEIRD IS HAPPENING HERE with the actual concentrations. Check it out. Probably to do with high Taurine RF.Ratio! ###
 # Calculate umol/vial for compounds without an internal standard ----------
-Quantitative.data <- BMISd.data %>%
-  mutate(RF.ave = as.numeric(rowMeans(BMISd.data[, c("RF.min", "RF.max")]))) %>%
+Quantitative.data <- BMISd.data.filtered %>%
+  mutate(RF.ave = as.numeric(rowMeans(BMISd.data.filtered[, c("RF.min", "RF.max")]))) %>%
   mutate(umol.in.vial.ave = Adjusted.Area/RF.ave/RF.ratio,
          umol.in.vial.max = Adjusted.Area/RF.min/RF.ratio,
          umol.in.vial.min = Adjusted.Area/RF.max/RF.ratio) %>%
   select(Metabolite.Name:Adjusted.Area, everything())
 
 # Pull out data for matched internal standards ----------------------------
-IS.key <- BMISd.data %>%
+IS.key <- BMISd.data.filtered %>%
   select(FinalBMIS, Metabolite.Name) %>%
   unique() %>%
   left_join(original.IS.key %>% select(FinalBMIS, Concentration_nM)) %>%
@@ -168,12 +164,12 @@ IS.data <- Full.data %>%
   select(IS_Area, FinalBMIS, Replicate.Name) %>%
   left_join(IS.key %>% select(FinalBMIS, Metabolite.Name, Concentration_nM))
 
-Matched.IS.Compounds <- data.frame(Compounds = c(IS.key[ ,"FinalBMIS"], as.character(IS.key[ ,"Metabolite.Name"])))
+matched.IS.compounds <- data.frame(Compounds = c(IS.key[ ,"FinalBMIS"], as.character(IS.key[ ,"Metabolite.Name"])))
 
 IS.sample.data <- QCd.data %>%
   left_join(IS.data %>% select(FinalBMIS, Metabolite.Name, Concentration_nM), by = "Metabolite.Name") %>%
   unique() %>%
-  filter(Metabolite.Name %in% Matched.IS.Compounds$Compounds) %>%
+  filter(Metabolite.Name %in% matched.IS.compounds$Compounds) %>%
   filter(!str_detect(Replicate.Name, "Std")) %>%
   mutate(Std.Type = ifelse(str_detect(Metabolite.Name, ","), "Internal_std", "Standard")) %>%
   mutate(testcol1 = ifelse(str_detect(Metabolite.Name, ","), sapply(strsplit(Metabolite.Name, ","), `[`, 1), Metabolite.Name)) %>%
@@ -199,7 +195,7 @@ rm(list = c("Matched.IS.Compounds", "QCd.data", "IS.mid_frame", "IS.mid_frame2")
 
 
 # Add matched IS_smp info back into main frame ------------------------------------------------
-all.info <- Quantitative.data %>% 
+All.Info <- Quantitative.data %>% 
   select(Metabolite.Name, runDate:replicate, Adjusted.Area, Area.with.QC, RF.ratio:umol.in.vial.min) %>%
   unite(Sample.Name, c("runDate", "type", "SampID", "replicate"), remove = FALSE) %>%
   left_join(IS.sample.data %>% select(Sample.Name, Metabolite.Name, umol.in.vial_IS)) %>%
@@ -207,17 +203,17 @@ all.info <- Quantitative.data %>%
          umol.in.vial.max = ifelse(is.na(umol.in.vial_IS), umol.in.vial.max, NA),
          umol.in.vial.min = ifelse(is.na(umol.in.vial_IS), umol.in.vial.min, NA)) %>%
   rename(Replicate.Name = Sample.Name) %>%
-  select(-runDate, -type, -replicate) %>%
-  filter(!str_detect(Replicate.Name, "DDA"))
+  select(-runDate, -type, -replicate) # %>%
+  #filter(!str_detect(Replicate.Name, "DDA"))
 
 # Add in dilution factor and filtered volume --------------------------------------------------
-all.info.quant <- all.info %>%
+All.Info.Quantitative <- All.Info %>%
   mutate(nmol.in.Enviro.ave = (umol.in.vial.ave*10^-6*Injection.Volume/Volume.Filtered*1000*Dilution.Factor)) %>% 
   left_join(Full.data %>% select(Metabolite.Name, Emperical.Formula)) %>%
   unique()
 
 # Get molecules of carbon and nitrogen ------------------------------------
-all.info.molecules <- all.info.quant  %>%
+All.Info.Molecules <- All.Info.Quantitative  %>%
   mutate(C = ifelse(is.na(str_extract(Emperical.Formula, "^C\\d\\d")),
                     str_extract(Emperical.Formula, "^C\\d"),
                     str_extract(Emperical.Formula, "^C\\d\\d"))) %>%
@@ -231,7 +227,7 @@ all.info.molecules <- all.info.quant  %>%
   select(Metabolite.Name, SampID, Replicate.Name, everything())
 
 # Summarize for each metabolite ------------------------------------
-all.info.summed <- all.info.molecules %>%
+All.Info.Summed <- All.Info.Molecules %>%
   group_by(Metabolite.Name) %>%
   summarise(nmol.Enviro.med = median(nmol.in.Enviro.ave, na.rm  = T),
             nmol.Enviro.min = min(nmol.in.Enviro.ave, na.rm  = T),
@@ -242,7 +238,7 @@ all.info.summed <- all.info.molecules %>%
   arrange(desc(nmol.Enviro.med))
 
 # Summarize total carbon and nitrogen for each compound ------------------------------------
-quantitative.perID <- all.info.molecules %>%
+All.perSampID <- All.Info.Molecules %>%
   select(SampID, nmol.C.ave, nmol.N.ave) %>%
   group_by(SampID) %>%
   summarise(totalCmeasured_nM_perID = sum(as.numeric(nmol.C.ave), na.rm = TRUE),
@@ -250,16 +246,16 @@ quantitative.perID <- all.info.molecules %>%
 
 
 # Calculate mole fractions of each compound ------------------------------------
-quantitative.final <- all.info.molecules %>%
+Final.Quantitative <- All.Info.Molecules %>%
   unique() %>%
-  left_join(quantitative.perID) %>%
+  left_join(All.perSampID) %>%
   mutate(ratioCN = totalCmeasured_nM_perID / totalNmeasured_nM_perID) %>%
   mutate(molFractionC = nmol.C.ave/totalCmeasured_nM_perID,
          molFractionN = nmol.N.ave/totalNmeasured_nM_perID) %>%
   select(Metabolite.Name, Replicate.Name, Adjusted.Area, Area.with.QC, RF.ratio:molFractionN) %>%
   unique()
 
-quantitative.summed <- quantitative.final %>%
+Final.Quantitative.Summed <- Final.Quantitative %>%
   group_by(Metabolite.Name) %>%
   summarise(nmol.Enviro.med = median(nmol.in.Enviro.ave, na.rm  = T),
             nmol.Enviro.min = min(nmol.in.Enviro.ave, na.rm  = T),
@@ -281,9 +277,9 @@ csvFileName.final <- paste("data_processed/Quantified_Measurements_", currentDat
 csvFileName.perID <- paste("data_processed/Quantified_perSampID_", currentDate, ".csv", sep = "")
 
 
-write.csv(quantitative.summed, csvFileName.summed, row.names = FALSE)
-write.csv(quantitative.final, csvFileName.final, row.names = FALSE)
-write.csv(quantitative.perID, csvFileName.perID, row.names = FALSE)
+write.csv(Final.Quantitative.Summed, csvFileName.summed, row.names = FALSE)
+write.csv(Final.Quantitative, csvFileName.final, row.names = FALSE)
+write.csv(All.perSampID, csvFileName.perID, row.names = FALSE)
 
 
 

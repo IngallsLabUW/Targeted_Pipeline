@@ -61,6 +61,7 @@ IdentifyDuplicates <- function(df) {
       ungroup() %>%
       select(Metabolite.Name) %>%
       unique()
+    print("HILIC duplicates table created.")
     
     return(duplicates)
   } else {
