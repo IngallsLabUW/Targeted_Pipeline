@@ -41,6 +41,33 @@ CheckStandards <- function (df) {
   return(df.checked)
 }
 
+IdentifyDuplicates <- function(df) {
+  # If data is HILIC, Determine which compounds are detected in both positive and negative HILIC runs.
+  # Otherwise, the function will return a printed message.
+  # 
+  # Args
+  #   df: MSDial dataframe, containing all required parameters (MZ, SN, Area, etc),
+  #       and modified to long form instead of wide.
+  # 
+  # Returns
+  #   duplicates: Simple dataframe of listed compounds that have been identified as duplicates.
+  #
+  if ("Column" %in% colnames(df)) {
+    duplicates <- df %>%
+      group_by(Metabolite.Name, Replicate.Name) %>%
+      mutate(number = 1) %>%
+      mutate(ticker = cumsum(number)) %>%
+      filter(ticker == 2) %>%
+      ungroup() %>%
+      select(Metabolite.Name) %>%
+      unique()
+    
+    return(duplicates)
+  } else {
+    print("No instrument column data found.")
+  }
+}
+
 IdentifyRunTypes <- function(df) {
   # Identify run typfes and return each unique value present in the Skyline output.
   #
@@ -164,26 +191,7 @@ CheckBlankMatcher <- function(blank.matcher) {
 
 
 
-IdentifyDuplicates <- function(df) {
-  # Determine which compounds are detected in both positive and negative HILIC runs.
-  # 
-  # Args
-  #   df: MSDial dataframe, containing all required parameters (MZ, SN, Area, etc),
-  #       and modified to long form instead of wide.
-  # 
-  # Returns
-  #   duplicates: Simple dataframe of listed compounds that have been identified as duplicates.
-  #
-  duplicates <- df %>%
-    group_by(Metabolite.Name, Replicate.Name) %>%
-    mutate(number = 1) %>%
-    mutate(ticker = cumsum(number)) %>%
-    filter(ticker == 2) %>%
-    ungroup() %>%
-    select(Metabolite.Name) %>%
-    unique()
-  return(duplicates)
-}
+
 
 
 
