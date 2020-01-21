@@ -1,12 +1,14 @@
 # Quality control script
 source("Functions.R")
 
+# Enter user data --------------------------------------------------
+# Set quality control parameters.
 area.min   <- 1000
 RT.flex    <- 0.4
 blk.thresh <- 0.3
 SN.min     <- 4
 
-pattern = "combined"
+pattern = "HILIC"
 
 
 # Import QC'd files and clean parameter data ----------------------------
@@ -21,11 +23,13 @@ msdial.runtypes <- IdentifyRunTypes(combined)
 
 RT.table <- combined %>%
   filter(Run.Type == "std") %>%
+  mutate(RT.Value = na_if(RT.Value, 0)) %>%
   arrange(Metabolite.Name) %>%
   group_by(Metabolite.Name) %>%
   mutate(RT.min = min(RT.Value, na.rm = TRUE)) %>%
   mutate(RT.max = max(RT.Value, na.rm = TRUE)) %>%
-  select(Metabolite.Name:RT.max) %>%
+  mutate(RT.diff = abs(RT.max - RT.min)) %>%
+  select(Metabolite.Name:RT.diff) %>%
   unique()
 
 blank.table <- combined %>%
@@ -40,21 +44,21 @@ blank.table <- combined %>%
   unique()
 
 
-# Create datasets for different flag types --------------------------------
+# Create signal to noise (SN) and area minimum flags --------------------------------
 SN.Area.Flags <- combined %>%
   arrange(Metabolite.Name) %>%
   mutate(SN.Flag       = ifelse(((SN.Value) < SN.min), "SN.Flag", NA)) %>%
   mutate(Area.Min.Flag = ifelse((Area.Value < area.min), "Area.Min.Flag", NA))
 
-# Joining datasets---------------------------------------
+# Create retention time flags ---------------------------------------
 add.RT.Flag <- SN.Area.Flags %>%
-  group_by(Metabolite.Name) %>%
-  left_join(RT.table, by = c("Metabolite.Name", "Run.Type")) %>%
+  left_join(RT.table %>% select(-Run.Type)) %>%
   mutate(RT.Flag = ifelse((RT.Value >= (RT.max + RT.flex) | RT.Value <= (RT.min - RT.flex)), "RT.Flag", NA)) %>%
-  select(-c("RT.max", "RT.min"))
+  select(-c("RT.max", "RT.min", "RT.diff"))
 
+# Create blank flags ---------------------------------------
 add.blk.Flag <- add.RT.Flag %>%
-  left_join(blank.table, by = c("Metabolite.Name", "Run.Type")) %>%
+  left_join(blank.table %>% select(-Run.Type)) %>%
   mutate(Blank.Flag = ifelse((Area.Value / Blk.max) < blk.thresh, "Blank.Flag", NA)) %>%
   select(-c("Blk.min", "Blk.max"))
 
@@ -83,7 +87,7 @@ df <- data.frame(Description, Value)
 final.table <- bind_rows(df, final.table)
 
 currentDate <- Sys.Date()
-csvFileName <- paste("data_processed/QC_HILIC_Output_", currentDate, ".csv", sep = "")
+csvFileName <- paste("data_processed/MSDial_QC_Output_", pattern, "_", currentDate, ".csv", sep = "")
 
 write.csv(final.table, csvFileName, row.names = FALSE)
 

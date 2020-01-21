@@ -1,6 +1,6 @@
 source("Functions.R")
 
-# User data
+# Enter user data --------------------------------------------------
 matching.pattern = "CYANO"
 
 
@@ -89,7 +89,7 @@ if (TRUE %in% grepl('pos|neg', names(.GlobalEnv), ignore.case = TRUE)) {
 combined.final <- StandardizeMetabolites(combined.final)
 
 currentDate <- Sys.Date()
-csvFileName <- paste("data_processed/MSDial_combined_", currentDate, ".csv", sep = "")
+csvFileName <- paste("data_processed/MSDial_combined_", matching.pattern, "_", currentDate, ".csv", sep = "")
 
 write.csv(combined.final, csvFileName, row.names = FALSE)
 

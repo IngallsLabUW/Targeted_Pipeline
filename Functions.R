@@ -41,6 +41,22 @@ CheckStandards <- function (df) {
   return(df.checked)
 }
 
+IdentifyRunTypes <- function(df) {
+  # Identify run typfes and return each unique value present in the Skyline output.
+  #
+  # Args
+  #   df: Raw output file from Skyline.
+  #
+  # Returns
+  #   run.type: list of labels identifying the run types, isolated from Replicate.Name.
+  #   Options conssist of samples (smp), pooled (poo), standards (std), and blanks (blk).
+  #
+  run.type <- tolower(str_extract(df$Replicate.Name, "(?<=_)[^_]+(?=_)"))
+  print(paste("Your runtypes are:", toString(unique(run.type))))
+  
+  return(run.type)
+}
+
 RearrangeDatasets <- function(df, parameter) {
   # Shortcut for altering multiple datasets using the tidyr::gather() function.
   #
@@ -143,20 +159,7 @@ CheckBlankMatcher <- function(blank.matcher) {
   return(blank.matcher)
 }
 
-IdentifyRunTypes <- function(msdial.file) {
-  # Identify run typfes and return each unique value present in the Skyline output.
-  #
-  # Args
-  #   msdial.file: Raw output file from Skyline.
-  #
-  # Returns
-  #   run.type: list of labels identifying the run types, isolated from Replicate.Name.
-  #   Options conssist of samples (smp), pooled (poo), standards (std), and blanks (blk).
-  #
-  run.type <- tolower(str_extract(msdial.file$Replicate.Name, "(?<=_)[^_]+(?=_)"))
-  print(paste("Your runtypes are:", toString(unique(run.type))))
-  return(run.type)
-}
+
 
 
 

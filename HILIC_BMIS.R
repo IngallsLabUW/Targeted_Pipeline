@@ -2,11 +2,6 @@
 source("Functions.R")
 
 
-# IS_inspectPlot (plot to make sure there aren't any internal standards we should kick out)
-# QuickReport (% that picked BMIS, with cut off values)
-# ISTest_plot (plot to evaluate if you cut off is appropriate)
-# BMIS_normalizedData (tibble with the info you actually want!)
-
 # Set parameters -----------------------------------------------------------------
 cut.off <- 0.4 # 30% decrease in RSD of pooled injections, aka improvement cutoff
 cut.off2 <- 0.1 # RSD minimum
