@@ -5,8 +5,16 @@ source("Functions.R")
 cut.off <- 0.4 # 30% decrease in RSD of pooled injections, aka improvement cutoff
 cut.off2 <- 0.1 # RSD minimum
 
-Column.Type = "HILIC"
+# Comment out appropriate variable block below according to HILIC or Cyano data.
 
+# Cyano
+# Column.Type = "RP"
+# sample.key.pattern = "CYANO"
+# standards.pattern = "Ingalls"
+# QC.pattern = "QC_Output_CYANO"
+
+# HILIC
+Column.Type = "HILIC"
 sample.key.pattern = "HILIC"
 standards.pattern = "Ingalls"
 QC.pattern = "QC_Output_HILIC"
@@ -19,11 +27,7 @@ filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
 SampKey.all <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
   rename(Replicate.Name = Sample.Name) %>%
   mutate(Replicate.Name = Replicate.Name %>%
-           str_replace("-",".")) %>%
-  # ## MISTAKE FROM HILIC SAMP KEY: FIXED
-  mutate(Replicate.Name = Replicate.Name %>%
-           str_replace("180821_Poo_MesoScopeQC_1a","180821_Poo_MesoScopeQC_1"))
-
+           str_replace("-",".")) 
 
 # Internal Standards
 filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = standards.pattern))
@@ -47,17 +51,23 @@ QCd.data <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = F
 
 # If data is HILIC, identify duplicates and decide which to remove --------------------------------------------------
 # IdentifyDuplicates function will confirm if instrument column data exists.
+# User will need to use best judgement to decide which duplicate to remove.
 HILICS.duplicates <- IdentifyDuplicates(QCd.data)
-if (exists(HILICS.duplicates) == TRUE) {
+
+if (exists("HILICS.duplicates") == TRUE) {
   duplicates.testing <- QCd.data %>%
     filter(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name) %>%
     group_by(Metabolite.Name, Column) %>%
     summarize(mean(Area.with.QC, na.rm = TRUE))
-  
-  QCd.data <- QCd.data %>%
-    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
 
   } else {
+  print("Non-HILIC data: no duplicates to detect.")
+}
+
+if (exists("duplicates.testing") == TRUE) {
+  QCd.data <- QCd.data %>%
+    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
+} else {
   print("Non-HILIC data: no duplicates to remove.")
 }
 
@@ -84,9 +94,8 @@ SampKey <- SampKey.all %>%
   select(Replicate.Name, Area.with.QC, Mass.Feature)
 
 # Create Internal standard data to identify problematic compounds/replicates-----------------------------------------------------------------
-Int.Stds.data <- rbind(Int.Stds.data, SampKey) %>%
-  filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE)))
-
+Int.Stds.data <- rbind(Int.Stds.data, SampKey) #%>%
+  # filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE)))
 
 # Identify internal standards without an Area, i.e. any NA values.
 IS.Issues <- Int.Stds.data[is.na(Int.Stds.data$Area.with.QC), ]

@@ -168,6 +168,7 @@ StandardizeMetabolites <- function(df) {
   return(df.standardized)
 }
 
+TrimWhitespace <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 
 
@@ -187,7 +188,7 @@ StandardizeVariables <- function(df) {
   return(df)
 }
 
-TrimWhitespace <- function (x) gsub("^\\s+|\\s+$", "", x)
+
 
 CheckBlankMatcher <- function(blank.matcher) {
   # Takes a blank matcher file and separates any multi-value variable
