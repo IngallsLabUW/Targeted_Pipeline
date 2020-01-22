@@ -21,6 +21,26 @@ ChangeClasses <- function(df) {
   return(df)
 }
 
+CheckCyanoStandards <- function (df) {
+  # Mutates a new column identifying standard run types, then prints number of unique run types.
+  #
+  # Args
+  #   df: Dataset of containing a Replicate.Name column, pre-filtered to include only standard runs.
+  #
+  # Returns
+  #   df.checked: Dataset with a new column describing run types, and a printed message stating how many 
+  #               unique types there are.
+  #
+  df.checked <- df %>%
+    mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "Stds"), "Standards", "Water"),
+                        Matrix = ifelse(str_detect(Replicate.Name, "Matrix"), "Matrix", "Water"), sep = "_"))
+  
+  print(paste("Number of standard run types:", length(unique(df.checked$Type))))
+  print(unique(df.checked$Type))
+  
+  return(df.checked)
+}
+
 CheckStandards <- function (df) {
   # Mutates a new column identifying standard run types, then prints number of unique run types.
   #
@@ -205,17 +225,6 @@ CheckBlankMatcher <- function(blank.matcher) {
 #     #           MS1.isotopic.spectrum, MS.MS.spectrum, Average.Mz, Post.curation.result, Fill.., Annotation.tag..VS1.0., RT.matched, 
 #     #           m.z.matched, MS.MS.matched, Manually.modified, Total.score:Fragment.presence..))
 #   return(df.filtered)
-# }
-
-
-# RearrangeDatasets <- function(df, parameter) {
-#   df.gathered <- df %>%
-#     tidyr::gather(
-#       key = "Replicate.Name",
-#       value = eval(parse(text = paste("Area.Value"))),
-#       starts_with("X")) %>%
-#     select(Replicate.Name, parameter, everything())
-#   return(df.gathered)
 # }
 
 
