@@ -8,11 +8,11 @@ RT.flex    <- 0.4
 blk.thresh <- 0.3
 SN.min     <- 4
 
-pattern = "HILIC"
+file.pattern = "CYANO"
 
 
 # Import QC'd files and clean parameter data ----------------------------
-filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = pattern))
+filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = file.pattern))
 filepath <- file.path('data_processed', paste(filename, ".csv", sep = ""))
 
 combined <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
@@ -66,28 +66,26 @@ add.blk.Flag <- add.RT.Flag %>%
 # Combine all the flags ---------------------------------------------------
 final.table <- add.blk.Flag %>%
   mutate(all.Flags      = paste(SN.Flag, Area.Min.Flag, RT.Flag, Blank.Flag, sep = ", ")) %>%
-  mutate(all.Flags      = as.character(all.Flags %>% str_remove_all("NA, ") %>% str_remove_all("NA"))) %>%
+  mutate(all.Flags      =all.Flags %>% str_remove_all("NA, ") %>% str_remove_all("NA")) %>%
   mutate(all.Flags      = ifelse(all.Flags == "", NA, all.Flags)) %>%
   mutate(Area.with.QC   = ifelse(is.na(Area.Min.Flag), Area.Value, NA)) %>%
-  select(Replicate.Name:Area.Value, Area.with.QC, everything()) %>%
-  ungroup(Metabolite.Name) %>%
-  mutate(Metabolite.Name = as.character(Metabolite.Name)) 
+  select(Replicate.Name:Area.Value, Area.with.QC, everything())
 
 
 # Print to file with comments and a new name ------------------------------
-Description <- c("Hello! Welcome to the world of MSDIAL QE Quality Control! ",
+Description <- c(as.character(anydate(Sys.Date())),
+                "Hello! Welcome to the world of MSDIAL QE Quality Control! ",
                  "Minimum area for a real peak: ",
                  "RT flexibility: ",
                  "Blank can be this fraction of a sample: ",
-                 "S/N ratio: " ,
-                 "Processed on: ")
-Value <- c(NA, area.min, RT.flex, blk.thresh, SN.min, Sys.time())
+                 "S/N ratio: ")
+Value <- as.character(c(NA, NA, area.min, RT.flex, blk.thresh, SN.min))
 
 df <- data.frame(Description, Value)
 final.table <- bind_rows(df, final.table)
 
 currentDate <- Sys.Date()
-csvFileName <- paste("data_processed/MSDial_QC_Output_", pattern, "_", currentDate, ".csv", sep = "")
+csvFileName <- paste("data_processed/MSDial_QC_Output_", file.pattern, "_", currentDate, ".csv", sep = "")
 
 write.csv(final.table, csvFileName, row.names = FALSE)
 
