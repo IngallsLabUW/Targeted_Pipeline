@@ -8,7 +8,7 @@ RT.flex    <- 0.4
 blk.thresh <- 0.3
 SN.min     <- 4
 
-file.pattern = "CYANO"
+file.pattern = "HILIC"
 
 
 # Import QC'd files and clean parameter data ----------------------------

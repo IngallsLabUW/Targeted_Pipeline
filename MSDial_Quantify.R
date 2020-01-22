@@ -3,16 +3,26 @@ source("Functions.R")
 # This code retrieves mol/L from peak areas of targeted compounds.
 
 # User data ---------------------------------------------------------------
+
+Dilution.Factor = 2
+Injection.Volume = 400 # nanomoles
+Volume.Filtered = 5 # liters
+
+# Comment out appropriate variable block below according to HILIC or Cyano data.
+
+# Cyano
 standards.pattern = "Ingalls"
 BMIS.pattern = "BMIS_Output_RP"
 QC.pattern = "QC_Output_CYANO"
 names.pattern = "Names"
 Column.Type = "RP"
 
-
-Dilution.Factor = 2
-Injection.Volume = 400 # nanomoles
-Volume.Filtered = 5 # liters
+# HILIC
+# standards.pattern = "Ingalls"
+# BMIS.pattern = "BMIS_Output_HILIC"
+# QC.pattern = "QC_Output_HILIC"
+# names.pattern = "Names"
+# Column.Type = "HILIC"
 
 
 # Import standards and filter NAs ---------------------------------------------------------------
@@ -51,15 +61,19 @@ original.IS.key <- assign(make.names(filename), read.csv(filepath, stringsAsFact
 # Identify duplicate compounds that are detected in both HILIC Pos and Neg runs ------------------------------
 HILICS.duplicates <- IdentifyDuplicates(QCd.data)
 
-if (exists(HILICS.duplicates) == TRUE) {
+if (exists("HILICS.duplicates") == TRUE) {
   duplicates.testing <- QCd.data %>%
     filter(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name) %>%
     group_by(Metabolite.Name, Column) %>%
     summarize(mean(Area.with.QC, na.rm = TRUE))
   
+} else {
+  print("Non-HILIC data: no duplicates to detect.")
+}
+
+if (exists("duplicates.testing") == TRUE) {
   QCd.data <- QCd.data %>%
     filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
-  
 } else {
   print("Non-HILIC data: no duplicates to remove.")
 }
@@ -72,15 +86,12 @@ Full.data <- QCd.data %>%
   select(Replicate.Name, Metabolite.Name, Compound.Type, everything()) %>%
   unique()
 
-# Remove bad compounds --------------------------------------------------------
-
 # Check standard run types ----------------------------------------------------
 # This function is unlikely to work on all runs due to sampID differences. 
 # It will almost definitely need to be modified to apply to the dataset at hand. 
-Full.data <- CheckCyanoStandards(Full.data)
+Full.data <- CheckStandards2(Full.data)
 
 # Get response factors for transect compounds ----------------------------------
-
 Full.data.RF <- Full.data %>%
   mutate(RF = Area.with.QC/Conc..uM) %>%
   filter(!Compound.Type == "Internal Standard") %>%

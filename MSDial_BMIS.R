@@ -8,16 +8,16 @@ cut.off2 <- 0.1 # RSD minimum
 # Comment out appropriate variable block below according to HILIC or Cyano data.
 
 # Cyano
-# Column.Type = "RP"
-# sample.key.pattern = "CYANO"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_CYANO"
+Column.Type = "RP"
+sample.key.pattern = "CYANO"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_CYANO"
 
 # HILIC
-Column.Type = "HILIC"
-sample.key.pattern = "HILIC"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_HILIC"
+# Column.Type = "HILIC"
+# sample.key.pattern = "HILIC"
+# standards.pattern = "Ingalls"
+# QC.pattern = "QC_Output_HILIC"
 
 # Imports -----------------------------------------------------------------
 # Sample Key
