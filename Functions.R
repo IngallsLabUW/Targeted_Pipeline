@@ -21,26 +21,6 @@ ChangeClasses <- function(df) {
   return(df)
 }
 
-CheckCyanoStandards <- function (df) {
-  # Mutates a new column identifying standard run types, then prints number of unique run types.
-  #
-  # Args
-  #   df: Dataset of containing a Replicate.Name column, pre-filtered to include only standard runs.
-  #
-  # Returns
-  #   df.checked: Dataset with a new column describing run types, and a printed message stating how many 
-  #               unique types there are.
-  #
-  df.checked <- df %>%
-    mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "Stds"), "Standards", "Water"),
-                        Matrix = ifelse(str_detect(Replicate.Name, "Matrix"), "Matrix", "Water"), sep = "_"))
-  
-  print(paste("Number of standard run types:", length(unique(df.checked$Type))))
-  print(unique(df.checked$Type))
-  
-  return(df.checked)
-}
-
 CheckStandards <- function (df) {
   # Mutates a new column identifying standard run types, then prints number of unique run types.
   #
@@ -54,6 +34,26 @@ CheckStandards <- function (df) {
   df.checked <- df %>%
     mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "StdsMix|InH2O"), "Standards", "Water"),
                         Matrix = ifelse(str_detect(Replicate.Name, "InMatrix"), "Matrix", "Water"), sep = "_"))
+  
+  print(paste("Number of standard run types:", length(unique(df.checked$Type))))
+  print(unique(df.checked$Type))
+  
+  return(df.checked)
+}
+
+CheckStandards2 <- function (df) {
+  # Mutates a new column identifying standard run types, then prints number of unique run types.
+  #
+  # Args
+  #   df: Dataset of containing a Replicate.Name column, pre-filtered to include only standard runs.
+  #
+  # Returns
+  #   df.checked: Dataset with a new column describing run types, and a printed message stating how many 
+  #               unique types there are.
+  #
+  df.checked <- df %>%
+    mutate(Type = paste(Env = ifelse(str_detect(Replicate.Name, "Stds"), "Standards", "Water"),
+                        Matrix = ifelse(str_detect(Replicate.Name, "Matrix"), "Matrix", "Water"), sep = "_"))
   
   print(paste("Number of standard run types:", length(unique(df.checked$Type))))
   print(unique(df.checked$Type))
@@ -171,6 +171,8 @@ StandardizeMetabolites <- function(df) {
 
 
 
+# Unused functions --------------------------------------------------------
+
 StandardizeVariables <- function(df) {
   if (c("ReplicateName", "AreaValue", "MZValue", "RTValue", "SNValue") %in% colnames(df))
   {
@@ -206,70 +208,3 @@ CheckBlankMatcher <- function(blank.matcher) {
   
   return(blank.matcher)
 }
-
-
-
-
-
-
-
-
-
-
-# Old Functions -----------------------------------------------------------
-
-# FilterUnknowns <- function(df) {
-#   df.filtered <- df %>%  
-#     filter_(!Metabolite.name == "Unknown") #%>%
-#     # select(-c(Average.Rt.min., Formula, Ontology, INCHIKEY, SMILES, Isotope.tracking.parent.ID, Isotope.tracking.weight.number, 
-#     #           MS1.isotopic.spectrum, MS.MS.spectrum, Average.Mz, Post.curation.result, Fill.., Annotation.tag..VS1.0., RT.matched, 
-#     #           m.z.matched, MS.MS.matched, Manually.modified, Total.score:Fragment.presence..))
-#   return(df.filtered)
-# }
-
-
-## TBD VARIABLE RENAMES
-# asNumeric <- function(x) as.numeric(as.character(x))
-# asCharacter <- function(x) as.character(x)
-# 
-# factorsNumeric <- function(df) ifelse(grepl('^X', df), 
-#                                      modifyList(df, lapply(df[, sapply(df, is.factor)], asNumeric)), 
-#                                      modifyList(df, lapply(df[, sapply(df, is.factor)], asCharacter)))
-
-# mutate(Metabolite.name = ifelse(str_detect(Metabolite.name, "Ingalls_"), sapply(strsplit(Metabolite.name, "_"), `[`, 2), Metabolite.name))
-
-# Do we need this function?
-# CheckBlankMatcher <- function(blank.matcher) {
-#   # Takes a blank matcher file and separates any multi-value variable
-#   # columns into their own row.
-#   #
-#   # Args:
-#   #   blank.matcher: CSV entered by user to match samples with
-#   #   appropriate blanks.
-#   #
-#   # Returns:
-#   #   blank.matcher: new CSV with any duplicate values separated
-#   #   into their own rows.
-#   #
-#   blank.matcher <- do.call("rbind", Map(data.frame,
-#                                         Blank.Name = strsplit(as.character(blank.matcher$Blank.Name), ","),
-#                                         Replicate.Name = (blank.matcher$Replicate.Name))
-#   )
-#   blank.matcher <- blank.matcher[c(2, 1)]
-#   
-#   return(blank.matcher)
-#}
-
-
-# IdentifyDuplicates <- function(df) {
-#   test <- which(duplicated(df$Compound.Name))
-#   duplicates <- as.data.frame(df$Compound.Name[test]) %>%
-#     rename(Compound.Name = 1) %>%
-#     arrange(Compound.Name)
-#   
-#   return(duplicates)
-# }
-
-
-
-# rm(list = ls()[!ls() %in% c("combined", lsf.str())])

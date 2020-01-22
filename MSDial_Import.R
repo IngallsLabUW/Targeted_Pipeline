@@ -1,22 +1,52 @@
 source("Functions.R")
+# Steps to import files
+# 1. For the file.patten variable, enter a pattern that will apply only to the files you want from the working directory.
+# 2. For the matching.pattern variable, comment or uncomment the correct line whether you are running HILIC or Cyano data.
+# 3. In the Assign filenames here section, comment or uncomment the block of variable names appropriate for your run.
 
 # Enter user data --------------------------------------------------
-matching.pattern = "CYANO"
+file.pattern = "CYANO"
+
+# Comment or uncomment depending on the run
+matching.pattern <- "RP.Cyano" # for Cyano
+#matching.pattern <- "positive|negative" # for HILIC
+
 
 
 # Import all MSDial files --------------------------------------------------
-filenames <- RemoveCsv(list.files(path = 'data_raw', pattern = matching.pattern))
+filenames <- RemoveCsv(list.files(path = 'data_raw', pattern = file.pattern))
 
 for (i in filenames) {
   filepath <- file.path('data_raw', paste(i,".csv", sep = ""))
   assign(i, read.csv(filepath, stringsAsFactors = FALSE))
 }
 
+# Assign filenames here --------------------------------------------------
+# Comment out the opposite run.
+
+# Cyano variables: 
+Area.RP.Cyano <- Area_CYANO_EddyTransect
+Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
+RT.RP.Cyano   <- RT_CYANO_EddyTransect
+SN.RP.Cyano   <- SN_CYANO_EddyTransect
+
+# HILIC variables: 
+# Area.positive <- Area_HILICPos_Example
+# Mz.positive   <- Mz_HILICPos_Example
+# RT.positive   <- RT_HILICPos_Example
+# SN.positive   <- SN_HILICPos_Example
+# 
+# Area.negative <- Area_HILICNeg_Example
+# Mz.negative   <- Mz_HILICNeg_Example
+# RT.negative   <- RT_HILICNeg_Example
+# SN.negative   <- SN_HILICNeg_Example
+
+
+# Set header, filter unknowns ---------------------------------------
 columns.to.drop <- c('Average.Rt.min.', 'Formula', 'Ontology', 'INCHIKEY', 'SMILES', 'Isotope.tracking.parent.ID', 'Isotope.tracking.weight.number',
 'MS1.isotopic.spectrum', 'MS.MS.spectrum', 'Average.Mz', 'Post.curation.result', 'Fill..', 'Annotation.tag..VS1.0.', 'RT.matched',
 'm.z.matched', 'MS.MS.matched', 'Manually.modified', 'Total.score', 'RT.similarity', 'Dot.product', 'Reverse.dot.product', 'Fragment.presence..')
 
-# Set header, filter unknowns ---------------------------------------
 runs <- grep(matching.pattern, names(.GlobalEnv), value = TRUE, ignore.case = TRUE)
 runlist <- do.call("list", mget(runs))
 
@@ -29,59 +59,60 @@ for (df in seq_along(headers.set)) {
   headers.set[[df]] <- headers.set[[df]] %>% rename(Metabolite.Name = Metabolite.name)
 }
 
-# Change variable classes -------------------------------------------------
+# Change variable classes ---------------------------------------------------------------------
 classes.changed <- lapply(names(headers.set), function(x) ChangeClasses(headers.set[[x]]))
 names(classes.changed) <- runs
 
 list2env(classes.changed, globalenv())
 
 
-# Depending on whether run is HILIC or Cyano, rearrange data and combine to one dataframe -------------------------------------------------
-if (TRUE %in% grepl('pos|neg', names(.GlobalEnv), ignore.case = TRUE)) {
+# Rearrange data and combine to one dataframe -------------------------------------------------
+if (TRUE %in% grepl("positive|negative", names(.GlobalEnv), ignore.case = TRUE)) {
+  
   # HILIC Positive
-  Area.pos <- RearrangeDatasets(Area_HILICPos_Example, parameter = "Area.Value")
-  Mz.pos   <- RearrangeDatasets(Mz_HILICPos_Example, parameter = "Mz.Value")
-  RT.pos   <- RearrangeDatasets(RT_HILICPos_Example, parameter = "RT.Value")
-  SN.pos   <- RearrangeDatasets(SN_HILICPos_Example, parameter = "SN.Value")
-  
+  Area.positive <- RearrangeDatasets(Area.positive, parameter = "Area.Value")
+  Mz.positive   <- RearrangeDatasets(Mz.positive, parameter = "Mz.Value")
+  RT.positive   <- RearrangeDatasets(RT.positive, parameter = "RT.Value")
+  SN.positive   <- RearrangeDatasets(SN.positive, parameter = "SN.Value")
+
   # HILIC Negative
-  Area.neg <- RearrangeDatasets(Area_HILICNeg_Example, parameter = "Area.Value")
-  Mz.neg   <- RearrangeDatasets(Mz_HILICNeg_Example, parameter = "Mz.Value")
-  RT.neg   <- RearrangeDatasets(RT_HILICNeg_Example, parameter = "RT.Value")
-  SN.neg   <- RearrangeDatasets(SN_HILICNeg_Example, parameter = "SN.Value")
-  
-  
+  Area.negative <- RearrangeDatasets(Area.negative, parameter = "Area.Value")
+  Mz.negative   <- RearrangeDatasets(Mz.negative, parameter = "Mz.Value")
+  RT.negative   <- RearrangeDatasets(RT.negative, parameter = "RT.Value")
+  SN.negative   <- RearrangeDatasets(SN.negative, parameter = "SN.Value")
+
+
   # Combine to one dataset
-  combined.pos <- Area.pos %>%
-    left_join(Mz.pos) %>%
-    left_join(SN.pos) %>%
-    left_join(RT.pos) %>%
+  combined.pos <- Area.positive %>%
+    left_join(Mz.positive) %>%
+    left_join(SN.positive) %>%
+    left_join(RT.positive) %>%
     mutate(Column = "HILICPos") %>%
     select(Replicate.Name, Column, Area.Value, Mz.Value, RT.Value, SN.Value, everything())
-  
-  combined.neg <- Area.neg %>%
-    left_join(Mz.neg) %>%
-    left_join(SN.neg) %>%
-    left_join(RT.neg) %>%
+
+  combined.neg <- Area.negative %>%
+    left_join(Mz.negative) %>%
+    left_join(SN.negative) %>%
+    left_join(RT.negative) %>%
     mutate(Column = "HILICNeg") %>%
     select(Replicate.Name, Column, Area.Value, Mz.Value, RT.Value, SN.Value, everything())
-  
+
   combined.final <- combined.neg %>%
     bind_rows(combined.pos)
 
   } else {
   
   # Cyano
-  Area <- RearrangeDatasets(Area_CYANO_EddyTransect, parameter = "Area.Value")
-  Mz   <- RearrangeDatasets(Mz_CYANO_EddyTransect, parameter = "Mz.Value")
-  RT   <- RearrangeDatasets(RT_CYANO_EddyTransect, parameter = "RT.Value")
-  SN   <- RearrangeDatasets(SN_CYANO_EddyTransect, parameter = "SN.Value")
-  
+  Area <- RearrangeDatasets(Area.RP.Cyano, parameter = "Area.Value")
+  Mz   <- RearrangeDatasets(Mz.RP.Cyano, parameter = "Mz.Value")
+  RT   <- RearrangeDatasets(RT.RP.Cyano, parameter = "RT.Value")
+  SN   <- RearrangeDatasets(SN.RP.Cyano, parameter = "SN.Value")
+
   combined.final <- Area %>%
     left_join(Mz) %>%
     left_join(SN) %>%
     left_join(RT) %>%
-    select(Replicate.Name, Area.Value, Mz.Value, RT.Value, SN.Value, everything()) 
+    select(Replicate.Name, Area.Value, Mz.Value, RT.Value, SN.Value, everything())
 }
 
 
@@ -89,7 +120,7 @@ if (TRUE %in% grepl('pos|neg', names(.GlobalEnv), ignore.case = TRUE)) {
 combined.final <- StandardizeMetabolites(combined.final)
 
 currentDate <- Sys.Date()
-csvFileName <- paste("data_processed/MSDial_combined_", matching.pattern, "_", currentDate, ".csv", sep = "")
+csvFileName <- paste("data_processed/MSDial_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
 
 write.csv(combined.final, csvFileName, row.names = FALSE)
 
