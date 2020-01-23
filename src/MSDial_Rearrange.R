@@ -1,7 +1,10 @@
 # Set header, filter unknowns ---------------------------------------
-columns.to.drop <- c('Average.Rt.min.', 'Formula', 'Ontology', 'INCHIKEY', 'SMILES', 'Isotope.tracking.parent.ID', 'Isotope.tracking.weight.number',
-'MS1.isotopic.spectrum', 'MS.MS.spectrum', 'Average.Mz', 'Post.curation.result', 'Fill..', 'Annotation.tag..VS1.0.', 'RT.matched',
-'m.z.matched', 'MS.MS.matched', 'Manually.modified', 'Total.score', 'RT.similarity', 'Dot.product', 'Reverse.dot.product', 'Fragment.presence..')
+columns.to.drop <- c('Average.Rt.min.', 'Formula', 'Ontology', 'INCHIKEY', 'SMILES', 
+                     'Isotope.tracking.parent.ID', 'Isotope.tracking.weight.number',
+                      'MS1.isotopic.spectrum', 'MS.MS.spectrum', 'Average.Mz', 'Post.curation.result', 
+                      'Fill..', 'Annotation.tag..VS1.0.', 'RT.matched',
+                      'm.z.matched', 'MS.MS.matched', 'Manually.modified', 'Total.score', 'RT.similarity', 
+                     'Dot.product', 'Reverse.dot.product', 'Fragment.presence..')
 
 runs <- grep(matching.pattern, names(.GlobalEnv), value = TRUE, ignore.case = TRUE)
 runlist <- do.call("list", mget(runs))
@@ -80,4 +83,4 @@ csvFileName <- paste("data_processed/MSDial_combined_", file.pattern, "_", curre
 
 write.csv(combined.final, csvFileName, row.names = FALSE)
 
-rm(list = ls())
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))

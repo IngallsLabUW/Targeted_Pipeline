@@ -79,8 +79,8 @@ SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 ```
 
-Inputs: Area, Mz, RT and SN datasets as defined in the previous step.
-Outputs: 'data_processed/MSDial_combined_*file.pattern*_*DATE*.csv
+Inputs: Area, Mz, RT and SN datasets as defined in the previous step, existing in the global environment.
+Outputs: "data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
 ```{r, include=FALSE}
 source("src/MSDial_Rearrange.R")
 ```
@@ -88,3 +88,18 @@ source("src/MSDial_Rearrange.R")
 --------------------------------------------------------------
 
 Section II: Quality Control and flagging of problematic peaks.
+
+*Action required*
+Define parameters for quality control. These will change depending on whether you are analyzing HILIC or Cyano data.
+```{r, include=FALSE}
+area.min   <- 1000
+RT.flex    <- 0.4
+blk.thresh <- 0.3
+SN.min     <- 4
+```
+
+Inputs: "data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
+Outputs: "data_processed/MSDial_QC_Output_*file.pattern*_*Date*.csv"
+```{r, include=FALSE}
+source("src/MSDial_QC.R")
+```

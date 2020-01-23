@@ -1,15 +1,4 @@
 # Quality control script
-source("Functions.R")
-
-# Enter user data --------------------------------------------------
-# Set quality control parameters.
-area.min   <- 1000
-RT.flex    <- 0.4
-blk.thresh <- 0.3
-SN.min     <- 4
-
-file.pattern = "HILIC"
-
 
 # Import QC'd files and clean parameter data ----------------------------
 filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = file.pattern))
@@ -89,4 +78,4 @@ csvFileName <- paste("data_processed/MSDial_QC_Output_", file.pattern, "_", curr
 
 write.csv(final.table, csvFileName, row.names = FALSE)
 
-rm(list = ls())
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
