@@ -20,14 +20,25 @@ options(scipen=999)
 source("src/Functions.R")
 ```
 
+This script controls the full targeted pipeline for Cyano and HILIC data that have been run through the MSDial metabolomics software.
+
+It contains four major sections:
+Section I: Import and cleaning/rearranging of data.
+Section II: Quality control using user-defined parameters.
+Section III: Applying Best-Matched Internal Standard (B-MIS).
+Section IV: Quantifying peak area to umol/vial when possible.
+
+--------------------------------------------------------------
+
+Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN).
+
+*Action required*
+Set patterns for matching Cyano or HILIC data.
 
 Steps to import files
 1. For the file.patten variable, enter a pattern that will apply only to the files you want from the working directory.
 2. For the matching.pattern variable, comment or uncomment the correct line whether you are running HILIC or Cyano data.
-3. In the Assign filenames here section, comment or uncomment the block of variable names appropriate for your run.
 
-*Action required*
-Set patterns for matching Cyano or HILIC data.
 ```{r, include=FALSE}
 # Cyano
 file.pattern <- "CYANO"
@@ -38,12 +49,14 @@ matching.pattern <- "RP.Cyano"
 # matching.pattern <- "positive|negative" 
 ```
 
-First section: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN)
 ```{r, include=FALSE}
 source("src/MSDial_Import.R")
 ```
 
 *Action required*
+Steps to import files continued
+
+3. In the Assign filenames here section, comment or uncomment the block of variable names appropriate for your run.
 ```{r, include=FALSE}
 # Comment out the run not being used.
 
@@ -66,7 +79,12 @@ SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 ```
 
-
+Inputs: Area, Mz, RT and SN datasets as defined in the previous step.
+Outputs: 'data_processed/MSDial_combined_*file.pattern*_*DATE*.csv
 ```{r, include=FALSE}
 source("src/MSDial_Rearrange.R")
 ```
+
+--------------------------------------------------------------
+
+Section II: Quality Control and flagging of problematic peaks.
