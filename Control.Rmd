@@ -20,20 +20,53 @@ options(scipen=999)
 source("src/Functions.R")
 ```
 
-First section: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN)
-
-```{r, include=FALSE}
-file.pattern <- "CYANO"
-matching.pattern <- "RP.Cyano"
-#matching.pattern <- "positive|negative" # for HILIC
-
-```
 
 Steps to import files
 1. For the file.patten variable, enter a pattern that will apply only to the files you want from the working directory.
 2. For the matching.pattern variable, comment or uncomment the correct line whether you are running HILIC or Cyano data.
 3. In the Assign filenames here section, comment or uncomment the block of variable names appropriate for your run.
+
+*Action required*
+Set patterns for matching Cyano or HILIC data.
+```{r, include=FALSE}
+# Cyano
+file.pattern <- "CYANO"
+matching.pattern <- "RP.Cyano"
+
+# HILIC
+# file.pattern <- "HILIC"
+# matching.pattern <- "positive|negative" 
+```
+
+First section: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN)
 ```{r, include=FALSE}
 source("src/MSDial_Import.R")
+```
 
+*Action required*
+```{r, include=FALSE}
+# Comment out the run not being used.
+
+# Cyano variables: 
+Area.RP.Cyano <- Area_CYANO_EddyTransect
+Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
+RT.RP.Cyano   <- RT_CYANO_EddyTransect
+SN.RP.Cyano   <- SN_CYANO_EddyTransect
+
+# HILIC variables: 
+# Area.positive <- Area_HILICPos_Example
+# Mz.positive   <- Mz_HILICPos_Example
+# RT.positive   <- RT_HILICPos_Example
+# SN.positive   <- SN_HILICPos_Example
+# 
+# Area.negative <- Area_HILICNeg_Example
+# Mz.negative   <- Mz_HILICNeg_Example
+# RT.negative   <- RT_HILICNeg_Example
+# SN.negative   <- SN_HILICNeg_Example
+
+```
+
+
+```{r, include=FALSE}
+source("src/MSDial_Rearrange.R")
 ```
