@@ -1,10 +1,4 @@
 ## Function definitions ##
-library(anytime)
-library(rlist)
-library(tidyverse)
-library(tidyr)
-options(scipen=999)
-
 
 ChangeClasses <- function(df) {
   # Identifies columns starting with X and changes their class to numeric.
@@ -160,6 +154,15 @@ SetHeader <- function(df) {
 }
 
 StandardizeMetabolites <- function(df) {
+  # Remove any "Ingalls_" prefixes that may be present in a dataframe.
+  # Remove "X" prefixes in syntactically correct Replicate Names.
+  #
+  # Args
+  #   df: MSDial dataframe.
+  #
+  # Returns
+  #   df.standardized: Dataframe with above modifications.
+  #
   df.standardized <- df %>%
     mutate(Metabolite.Name = ifelse(str_detect(Metabolite.Name, "Ingalls_"), sapply(strsplit(Metabolite.Name, "_"), `[`, 2), Metabolite.Name)) 
   
@@ -187,8 +190,6 @@ StandardizeVariables <- function(df) {
   }
   return(df)
 }
-
-
 
 CheckBlankMatcher <- function(blank.matcher) {
   # Takes a blank matcher file and separates any multi-value variable

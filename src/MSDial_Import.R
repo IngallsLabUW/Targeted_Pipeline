@@ -1,14 +1,9 @@
-source("Functions.R")
-# Steps to import files
-# 1. For the file.patten variable, enter a pattern that will apply only to the files you want from the working directory.
-# 2. For the matching.pattern variable, comment or uncomment the correct line whether you are running HILIC or Cyano data.
-# 3. In the Assign filenames here section, comment or uncomment the block of variable names appropriate for your run.
 
 # Enter user data --------------------------------------------------
-file.pattern = "CYANO"
+#file.pattern = "CYANO"
 
 # Comment or uncomment depending on the run
-matching.pattern <- "RP.Cyano" # for Cyano
+#matching.pattern <- "RP.Cyano" # for Cyano
 #matching.pattern <- "positive|negative" # for HILIC
 
 

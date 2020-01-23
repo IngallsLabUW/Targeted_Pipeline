@@ -1,10 +1,39 @@
 ---
-title: "TODO notes"
+title: "Targeted MSDial Pipeline"
 author: "RLionheart"
 date: "12/26/2019"
 output: html_document
 ---
 
+TODO
+- Figure out data_processed subdirectory creation
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(anytime)
+library(rlist)
+library(tidyverse)
+library(tidyr)
+options(scipen=999)
+
+source("src/Functions.R")
+```
+
+First section: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN)
+
+```{r, include=FALSE}
+file.pattern <- "CYANO"
+matching.pattern <- "RP.Cyano"
+#matching.pattern <- "positive|negative" # for HILIC
+
+```
+
+Steps to import files
+1. For the file.patten variable, enter a pattern that will apply only to the files you want from the working directory.
+2. For the matching.pattern variable, comment or uncomment the correct line whether you are running HILIC or Cyano data.
+3. In the Assign filenames here section, comment or uncomment the block of variable names appropriate for your run.
+```{r, include=FALSE}
+source("src/MSDial_Import.R")
+
 ```
