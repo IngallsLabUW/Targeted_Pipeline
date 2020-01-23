@@ -1,0 +1,1 @@
+Percent of Mass Features that picked a BMIS: 0.41044776119403 | RSD improvement cutoff 0.4 | RSD minimum cutoff 0.1
