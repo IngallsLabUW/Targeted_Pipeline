@@ -3,10 +3,14 @@ title: "Targeted MSDial Pipeline"
 author: "RLionheart"
 date: "12/26/2019"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 TODO
 - Figure out data_processed subdirectory creation
+- Rendering output inline (graphs, tables, etc.)
+- Save QuickReport to folder or intermediate place.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -18,6 +22,12 @@ library(tidyr)
 options(scipen=999)
 
 source("src/Functions.R")
+
+## TEMPORARY ##
+f <- list.files("data_processed/", include.dirs = F, full.names = T, recursive = T)
+file.remove(f)
+f <- list.files("figures/", include.dirs = F, full.names = T, recursive = T)
+file.remove(f)
 ```
 
 This script controls the full targeted pipeline for Cyano and HILIC data that have been run through the MSDial metabolomics software.
@@ -143,11 +153,18 @@ Inputs:
 "data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
 
 ```{r, include = FALSE}
-source("src/MSDial_BMIS.R")
+source("src/MSDial_BMIS_Imports.R")
 ```
-
-
 
 If data is HILIC, identify duplicates and decide which to remove 
 IdentifyDuplicates function will confirm if instrument column data exists.
 User will need to use best judgement to decide which duplicate to remove.
+```{r, include = FALSE}
+source("src/MSDial_Duplicates.R")
+```
+
+
+```{r, include = FALSE}
+source("src/MSDial_BMIS.R")
+head(IS.Issues)
+```
