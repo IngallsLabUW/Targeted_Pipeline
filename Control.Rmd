@@ -79,8 +79,10 @@ SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 ```
 
-Inputs: Area, Mz, RT and SN datasets as defined in the previous step, existing in the global environment.
-Outputs: "data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
+Inputs: 
+Area, Mz, RT and SN datasets as defined in the previous step, existing in the global environment.
+Outputs: 
+"data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
 ```{r, include=FALSE}
 source("src/MSDial_Rearrange.R")
 ```
@@ -90,6 +92,7 @@ source("src/MSDial_Rearrange.R")
 Section II: Quality Control and flagging of problematic peaks.
 
 *Action required*
+
 Define parameters for quality control. These will change depending on whether you are analyzing HILIC or Cyano data.
 ```{r, include=FALSE}
 area.min   <- 1000
@@ -98,8 +101,53 @@ blk.thresh <- 0.3
 SN.min     <- 4
 ```
 
-Inputs: "data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
-Outputs: "data_processed/MSDial_QC_Output_*file.pattern*_*Date*.csv"
+Inputs: 
+"data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
+Outputs: 
+"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
 ```{r, include=FALSE}
 source("src/MSDial_QC.R")
 ```
+
+--------------------------------------------------------------
+
+Section III: Best-Matched Internal Standard (B-MIS)
+
+*Action required*
+
+Enter user data for cut off parameters.
+cut.off = Decrease in RSD of pooled injections, aka improvement cutoff.
+cut.off2 = Relative squared deviation minimum.
+
+Comment out appropriate variable blocks according to HILIC or Cyano data.
+```{r, include = FALSE}
+cut.off <- 0.4 
+cut.off2 <- 0.1 
+
+# Cyano
+Column.Type = "RP"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_CYANO"
+
+# HILIC
+# Column.Type = "HILIC"
+# sample.key.pattern = "HILIC"
+# standards.pattern = "Ingalls"
+# QC.pattern = "QC_Output_HILIC"
+
+```
+
+Inputs:
+"data_extras/*Sample_Key_from_instrument*.csv"
+"data_extras/Ingalls_Lab_Standards.csv"
+"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
+
+```{r, include = FALSE}
+source("src/MSDial_BMIS.R")
+```
+
+
+
+If data is HILIC, identify duplicates and decide which to remove 
+IdentifyDuplicates function will confirm if instrument column data exists.
+User will need to use best judgement to decide which duplicate to remove.
