@@ -1,3 +1,4 @@
+# B-MIS 
 
 
 # Match QC'd data with Internal Standards list -----------------------------------------------------------------
@@ -23,8 +24,7 @@ SampKey <- SampKey.all %>%
   select(Replicate.Name, Area.with.QC, Mass.Feature)
 
 # Create Internal standard data to identify problematic compounds/replicates------------------------------------
-Int.Stds.data <- rbind(Int.Stds.data, SampKey) #%>%
-# filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE)))
+Int.Stds.data <- rbind(Int.Stds.data, SampKey) 
 
 # Identify internal standards without an Area, i.e. any NA values.
 IS.Issues <- Int.Stds.data[is.na(Int.Stds.data$Area.with.QC), ]
@@ -39,22 +39,28 @@ IS.Raw.Area.Plot <- ggplot(Int.Stds.data, aes(x = Replicate.Name, y = Area.with.
         legend.position = "top",
         strip.text = element_text(size = 10)) +
   ggtitle("Internal Standard Raw Areas")
-ggsave(file = "figures/IS.Raw.Areas.png", dpi = 600, width = 8, height = 6, units = "in")
-print(IS.Raw.Area.Plot)
 
+currentDate <- Sys.Date()
+plotFileName <- paste("figures/IS.Raw.Areas_", currentDate, ".png", sep = "")
+
+ggsave(file = plotFileName, dpi = 600, width = 8, height = 6, units = "in")
+print(IS.Raw.Area.Plot)
 
 # Edit data so names match, test that names are equal across sample sets------------------------------------------
 Data.long  <- Data.NoIS %>%
   rename(Mass.Feature = Metabolite.Name) %>%
   select(Replicate.Name, Mass.Feature, Area.with.QC) %>%
-  #filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
+  # Uncomment the next line to test the stop error message below.
+  # filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
   arrange(Replicate.Name)
 
 test_isdata <- as.data.frame(sort(unique(Int.Stds.data$Replicate.Name)), stringsAsFactors = FALSE)
 test_long <- as.data.frame(sort(unique(Data.long$Replicate.Name)), stringsAsFactors = FALSE)
 test <- identical(test_isdata[[1]], test_long[[1]])
+print(paste("Your replicate names are identical:", test))
 
-stopifnot(TRUE)
+if(test == FALSE) 
+  stop("Error: Your replicate names are not matched across datasets!")
 
 # Caluclate mean values for each Internal Standard----------------------------------------------------------------
 Int.Stds.means <- Int.Stds.data %>%
@@ -141,6 +147,8 @@ QuickReport <- print(paste("Percent of Mass Features that picked a BMIS:",
                            "RSD minimum cutoff", cut.off2,
                            sep = " "))
 
+reportFileName = paste("data_processed/QuickReport", file.pattern, "_", currentDate, ".txt", sep = "")
+cat(QuickReport, file = reportFileName)
 
 # Evaluate and visualize the results of your BMIS cutoff----------------------------------------------------------------
 IS_toISdat <- Mydata.new %>%
@@ -159,7 +167,10 @@ ISTest_plot <- ggplot() +
   geom_point(dat = injectONlY_toPlot, aes(x = RSD_ofPoo, y = RSD_of_Smp), size = 3) +
   facet_wrap(~ Mass.Feature) +
   ggtitle(paste("Results of BMIS Cutoff:", cut.off, "RSD decrease,", cut.off2, "RSD minimum."))
-ggsave(file = "figures/BMIS_Evaluation.png", dpi = 600, width = 8, height = 6, units = "in")
+
+plotFileName <- paste("figures/BMIS_Evaluation_", currentDate, ".png", sep = "")
+
+ggsave(file = plotFileName, dpi = 600, width = 8, height = 6, units = "in")
 print(ISTest_plot)
 
 
@@ -174,4 +185,4 @@ csvFileName <- paste("data_processed/BMIS_Output_", Column.Type, "_", currentDat
 
 write.csv(BMIS.normalized.data, csvFileName, row.names = FALSE)
 
-rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "QuickReport")], lsf.str()))

@@ -2,8 +2,10 @@
 title: "Targeted MSDial Pipeline"
 author: "RLionheart"
 date: "12/26/2019"
-output: html_document
-editor_options: 
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
   chunk_output_type: inline
 ---
 
@@ -32,7 +34,7 @@ f <- list.files("figures/", include.dirs = F, full.names = T, recursive = T)
 file.remove(f)
 ```
 
-This script controls the full targeted pipeline for Cyano and HILIC data that have been run through the MSDial metabolomics software.
+This script controls the targeted pipeline for QE Cyano and HILIC data run through the MSDial metabolomics software.
 
 It contains four major sections:
 Section I: Import and cleaning/rearranging of data.
@@ -44,58 +46,62 @@ Section IV: Quantifying peak area to umol/vial when possible.
 
 Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN).
 
-*Action required*
-Set patterns for matching Cyano or HILIC data.
+*User action required*
+Comment or uncomment the file.pattern and matching.pattern required for your files.
 
-Steps to import files
-1. For the file.patten variable, enter a pattern that will apply only to the files you want from the working directory.
-2. For the matching.pattern variable, comment or uncomment the correct line whether you are running HILIC or Cyano data.
-
-```{r, include=FALSE}
+```{r Pattern matching, include=FALSE}
 # Cyano
-file.pattern <- "CYANO"
-matching.pattern <- "RP.Cyano"
+# file.pattern <- "CYANO"
+# matching.pattern <- "RP.Cyano"
 
 # HILIC
-# file.pattern <- "HILIC"
-# matching.pattern <- "positive|negative" 
+file.pattern <- "HILIC"
+matching.pattern <- "positive|negative"
 ```
 
-```{r, include=FALSE}
+```{r MSDial Imports, include=FALSE}
 source("src/MSDial_Import.R")
 ```
 
-*Action required*
-Steps to import files continued
 
-3. In the Assign filenames here section, comment or uncomment the block of variable names appropriate for your run.
-```{r, include=FALSE}
+Reassign variables to new names.
+
+*User action required*
+Comment or uncomment the block of variable names appropriate for your run.
+
+```{r Dataset reassignment, include=FALSE}
 # Comment out the run not being used.
 
 # Cyano variables: 
-Area.RP.Cyano <- Area_CYANO_EddyTransect
-Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
-RT.RP.Cyano   <- RT_CYANO_EddyTransect
-SN.RP.Cyano   <- SN_CYANO_EddyTransect
+# Area.RP.Cyano <- Area_CYANO_EddyTransect
+# Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
+# RT.RP.Cyano   <- RT_CYANO_EddyTransect
+# SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 # HILIC variables: 
-# Area.positive <- Area_HILICPos_Example
-# Mz.positive   <- Mz_HILICPos_Example
-# RT.positive   <- RT_HILICPos_Example
-# SN.positive   <- SN_HILICPos_Example
-# 
-# Area.negative <- Area_HILICNeg_Example
-# Mz.negative   <- Mz_HILICNeg_Example
-# RT.negative   <- RT_HILICNeg_Example
-# SN.negative   <- SN_HILICNeg_Example
+Area.positive <- Area_HILICPos_Example
+Mz.positive   <- Mz_HILICPos_Example
+RT.positive   <- RT_HILICPos_Example
+SN.positive   <- SN_HILICPos_Example
+
+Area.negative <- Area_HILICNeg_Example
+Mz.negative   <- Mz_HILICNeg_Example
+RT.negative   <- RT_HILICNeg_Example
+SN.negative   <- SN_HILICNeg_Example
 
 ```
+
+In the MSDial datasets:
+Set header, filter unknowns.
+Change variable classes from character/factor to numeric, according to column.
+Rearrange the dataframes and combine to a single frame in long format.
+Standardize dataset by removing "Ingalls_" prefixes from compound names, and removing the syntactically correct "X" from Replicates.
 
 Inputs: 
 Area, Mz, RT and SN datasets as defined in the previous step, existing in the global environment.
 Outputs: 
 "data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
-```{r, include=FALSE}
+```{r Dataset rearrangement, include=FALSE}
 source("src/MSDial_Rearrange.R")
 ```
 
@@ -103,73 +109,110 @@ source("src/MSDial_Rearrange.R")
 
 Section II: Quality Control and flagging of problematic peaks.
 
-*Action required*
-
-Define parameters for quality control. These will change depending on whether you are analyzing HILIC or Cyano data.
-```{r, include=FALSE}
+*User action required*
+Define parameters for quality control. These act as comparison for filtering out data.
+The numbers will change depending on whether you are analyzing HILIC or Cyano data.
+```{r QC parameters, include=FALSE}
 area.min   <- 1000
 RT.flex    <- 0.4
 blk.thresh <- 0.3
 SN.min     <- 4
 ```
 
+In the Quality Control Step:
+Import files.
+Identify run types and check if all are present (blk, smp, std, poo).
+Create a table of standard retention times (RT) for comparison.
+Create a table of areas from blank runs for comparison.
+Flag peaks in the dataset that fall outside of user-defined bounds.
+Add parameter values to the top of the final file and save to the data_processed/ folder.
+
+
 Inputs: 
 "data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
 Outputs: 
 "data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
-```{r, include=FALSE}
+```{r MSDial QC, include=FALSE}
 source("src/MSDial_QC.R")
 ```
+
+Inspect the blank.table, final.table, and RT.table values. 
+Ensure that they look normal before proceeding to clear the environment in the next step.
+```{r, include=FALSE}
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
+```
+
 
 --------------------------------------------------------------
 
 Section III: Best-Matched Internal Standard (B-MIS)
-
-*Action required*
-
-Enter user data for cut off parameters.
-cut.off = Decrease in RSD of pooled injections, aka improvement cutoff.
-cut.off2 = Relative squared deviation minimum.
-
-Comment out appropriate variable blocks according to HILIC or Cyano data.
-```{r, include = FALSE}
-cut.off <- 0.4 
-cut.off2 <- 0.1 
-
-# Cyano
-Column.Type = "RP"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_CYANO"
-
-# HILIC
-# Column.Type = "HILIC"
-# sample.key.pattern = "HILIC"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_HILIC"
-
-```
 
 Inputs:
 "data_extras/*Sample_Key_from_instrument*.csv"
 "data_extras/Ingalls_Lab_Standards.csv"
 "data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
 
-```{r, include = FALSE}
+Outputs:
+"figures/IS.Raw.Areas.png"
+"figures/BMIS_Evalution.png"
+"data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
+"data_processed/QuickReport_*file.pattern*_*DATE*.txt"
+
+
+*User action required*
+Enter user data for cut off parameters.
+cut.off = Decrease in RSD of pooled injections, aka improvement cutoff.
+cut.off2 = Relative squared deviation minimum.
+
+```{r BMIS cutoff values, include=FALSE}
+cut.off <- 0.4 
+cut.off2 <- 0.1 
+```
+
+*User action required*
+Comment out appropriate variable blocks according to HILIC or Cyano data.
+```{r Cyano HILIC assignment, include=FALSE}
+# Cyano
+# Column.Type = "RP"
+# standards.pattern = "Ingalls"
+# QC.pattern = "QC_Output_CYANO"
+
+# HILIC
+Column.Type = "HILIC"
+sample.key.pattern = "HILIC"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_HILIC"
+
+```
+
+Import required files.
+```{r BMIS imports, include=}
 source("src/MSDial_BMIS_Imports.R")
 ```
 
+*User action required*
 If data is HILIC, identify duplicates and decide which to remove 
 IdentifyDuplicates function will confirm if instrument column data exists.
 User will need to use best judgement to decide which duplicate to remove.
-```{r, include = FALSE}
+```{r Check duplicates, include=}
 source("src/MSDial_Duplicates.R")
+
+# Using the duplicates.testing table, decide which detected compound to keep, the positive or negative.
+
+if (exists("duplicates.testing") == TRUE) {
+  QCd.data <- QCd.data %>%
+    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
+} else {
+  print("Non-HILIC data: no duplicates to remove.")
+}
+
 ```
 
-********
-TEXT TO GO HERE RE: WHAT TO DO WITH THE HILIC TABLE AND HOW TO MAKE FILTERING DECISIONS.
-ALSO OUTPUT FROM PREVIOUS SECTION.
-*******
-```{r, include = FALSE}
+In the BMIS step:
+Match QC'd data with Internal Standards list.
+Identify internal standards and visualize those areas.
+Test if replicate names are identical across the data and the sample key. Stop the analysis process if not.
+```{r BMIS, include=}
 source("src/MSDial_BMIS.R")
 ```
 
@@ -177,49 +220,86 @@ source("src/MSDial_BMIS.R")
 
 Section IV: Convert from peak area to umol/vial.
 
-*Action required*
+Inputs:
+"data_extras/Ingalls_Lab_Standards.csv"
+"data_extras/InternalStandardNames.csv"
+"data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
+"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
 
+Outputs:
+"data_processed/Quantified_Summary_*Column.Type*_*DATE*.csv
+"data_processed/Quantified_Measurements*Column.Type*_*DATE*.csv
+"data_processed/Quantified_perSampID_*Column.Type*_*DATE*.csv
+
+
+*User action required*
 Enter dilution factor, injection volume, and the filtered volume from the instrument run.
-Comment out appropriate variable blocks according to HILIC or Cyano data.
-```{r, include = FALSE}
+```{r, include=FALSE}
 Dilution.Factor = 2
 Injection.Volume = 400 # nanomoles
 Volume.Filtered = 5 # liters
+```
 
+*User action required*
+Comment out appropriate variable blocks according to HILIC or Cyano data.
+```{r, include=FALSE}
 # Cyano
-standards.pattern = "Ingalls"
-BMIS.pattern = "BMIS_Output_RP"
-QC.pattern = "QC_Output_CYANO"
-names.pattern = "Names"
-Column.Type = "RP"
+# standards.pattern = "Ingalls"
+# BMIS.pattern = "BMIS_Output_RP"
+# QC.pattern = "QC_Output_CYANO"
+# names.pattern = "Names"
+# Column.Type = "RP"
 
 # HILIC
-# standards.pattern = "Ingalls"
-# BMIS.pattern = "BMIS_Output_HILIC"
-# QC.pattern = "QC_Output_HILIC"
-# names.pattern = "Names"
-# Column.Type = "HILIC"
+standards.pattern = "Ingalls"
+BMIS.pattern = "BMIS_Output_HILIC"
+QC.pattern = "QC_Output_HILIC"
+names.pattern = "Names"
+Column.Type = "HILIC"
 
 ```
 
-```{r, include = FALSE}
+Import required files for quantification.
+```{r Quantify imports, include=}
 source("src/MSDial_Quantify_Imports.R")
-source("src/MSDial_Duplicates.R")
 ```
 
+*User action required*
+Repeat the HILIC duplicates step.
+```{r Check duplicates, include=}
+source("src/MSDial_Duplicates.R")
+
+# Using the duplicates.testing table, decide which detected compound to keep, the positive or negative.
+
+if (exists("duplicates.testing") == TRUE) {
+  QCd.data <- QCd.data %>%
+    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
+} else {
+  print("Non-HILIC data: no duplicates to remove.")
+}
+```
+
+Check which kinds of standards have been run.
+*****************************************************************************
 This function is unlikely to work on all runs due to sampID differences.
 It will almost definitely need to be modified to apply to the dataset at hand.
+*****************************************************************************
 ```{r, include = FALSE}
 Full.data <- CheckStandards2(Full.data)
 ```
 
+In the quantify step:
+Get response factors and response factor ratios.
+Quantify samples without an internal standard.
+Quantify samples with an internal standard.
+Accounting for dilution and filtered volume, calculate environmental quantities.
+Summarize carbon and nitrogen.
 ```{r, include = FALSE}
 source("src/MSDial_Quantify.R")
 ```
 
 
-Save and export files 
-
+Save and export files.
 ```{r, include = FALSE}
 currentDate <- Sys.Date()
 csvFileName.summed <- paste("data_processed/Quantified_Summary_", Column.Type, "_", currentDate, ".csv", sep = "")
@@ -230,4 +310,9 @@ csvFileName.perID <- paste("data_processed/Quantified_perSampID_", Column.Type, 
 write.csv(Final.Quantitative.Summed, csvFileName.summed, row.names = FALSE)
 write.csv(Final.Quantitative, csvFileName.final, row.names = FALSE)
 write.csv(All.perSampID, csvFileName.perID, row.names = FALSE)
+```
+
+Clear environment.
+```{r, include=FALSE}
+rm(list = ls())
 ```

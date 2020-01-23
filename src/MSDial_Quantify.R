@@ -1,3 +1,5 @@
+# This code retrieves mol/L from peak areas of targeted compounds.
+
 # Get response factors for transect compounds ----------------------------------
 Full.data.RF <- Full.data %>%
   mutate(RF = Area.with.QC/Conc..uM) %>%

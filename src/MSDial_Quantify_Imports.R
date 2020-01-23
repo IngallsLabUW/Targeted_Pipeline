@@ -1,5 +1,4 @@
-
-# This code retrieves mol/L from peak areas of targeted compounds.
+# Imports for the quantification step
 
 
 # Import standards and filter NAs ---------------------------------------------------------------

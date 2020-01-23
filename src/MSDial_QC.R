@@ -1,6 +1,6 @@
 # Quality control script
 
-# Import QC'd files and clean parameter data ----------------------------
+# Import files  ----------------------------
 filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = file.pattern))
 filepath <- file.path('data_processed', paste(filename, ".csv", sep = ""))
 
@@ -78,4 +78,4 @@ csvFileName <- paste("data_processed/MSDial_QC_Output_", file.pattern, "_", curr
 
 write.csv(final.table, csvFileName, row.names = FALSE)
 
-rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "final.table", "RT.table", "blank.table")], lsf.str()))
