@@ -1,108 +1,15 @@
-source("Functions.R")
-
-# This code retrieves mol/L from peak areas of targeted compounds.
-
-# User data ---------------------------------------------------------------
-
-Dilution.Factor = 2
-Injection.Volume = 400 # nanomoles
-Volume.Filtered = 5 # liters
-
-# Comment out appropriate variable block below according to HILIC or Cyano data.
-
-# Cyano
-standards.pattern = "Ingalls"
-BMIS.pattern = "BMIS_Output_RP"
-QC.pattern = "QC_Output_CYANO"
-names.pattern = "Names"
-Column.Type = "RP"
-
-# HILIC
-# standards.pattern = "Ingalls"
-# BMIS.pattern = "BMIS_Output_HILIC"
-# QC.pattern = "QC_Output_HILIC"
-# names.pattern = "Names"
-# Column.Type = "HILIC"
-
-
-# Import standards and filter NAs ---------------------------------------------------------------
-filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = standards.pattern))
-filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
-
-Ingalls.Standards <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
-  filter(Column == Column.Type) %>%
-  rename(Metabolite.Name = Compound.Name) %>%
-  select(Metabolite.Name,Compound.Type, QE.RF.ratio, Conc..uM, HILICMix, Emperical.Formula) %>%
-  filter(!is.na(Conc..uM)) 
-Ingalls.Standards$Metabolite.Name <- TrimWhitespace(Ingalls.Standards$Metabolite.Name)
-
-
-# Import BMIS'd sample file ---------------------------------------------------------------
-filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = BMIS.pattern))
-filepath <- file.path('data_processed', paste(filename, ".csv", sep = ""))
-BMISd.data <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE))
-
-# Import QC'd files and remove parameter data ------------------------------
-filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = QC.pattern))
-filepath <- file.path('data_processed', paste(filename, ".csv", sep = ""))
-
-QCd.data <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
-  slice(-1:-6) %>%
-  select(-c(Description, Value, Mz.Value, RT.Value, SN.Value, Alignment.ID, contains("Flag"))) %>%
-  select(Replicate.Name, Metabolite.Name, Area.with.QC, Area.Value, Run.Type, everything())
-
-# Import Internal standards key ---------------------------------------------------------------
-filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = names.pattern))
-filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
-
-original.IS.key <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
-  rename(FinalBMIS = Internal_Standards)
-
-# Identify duplicate compounds that are detected in both HILIC Pos and Neg runs ------------------------------
-HILICS.duplicates <- IdentifyDuplicates(QCd.data)
-
-if (exists("HILICS.duplicates") == TRUE) {
-  duplicates.testing <- QCd.data %>%
-    filter(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name) %>%
-    group_by(Metabolite.Name, Column) %>%
-    summarize(mean(Area.with.QC, na.rm = TRUE))
-  
-} else {
-  print("Non-HILIC data: no duplicates to detect.")
-}
-
-if (exists("duplicates.testing") == TRUE) {
-  QCd.data <- QCd.data %>%
-    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
-} else {
-  print("Non-HILIC data: no duplicates to remove.")
-}
-
-# Apply appropriate filters and isolate standards ---------------------------------------------------------------
-Full.data <- QCd.data %>%
-  filter(Metabolite.Name %in% Ingalls.Standards$Metabolite.Name) %>%
-  filter(str_detect(Replicate.Name, "Std")) %>%
-  left_join(Ingalls.Standards, by = "Metabolite.Name") %>%
-  select(Replicate.Name, Metabolite.Name, Compound.Type, everything()) %>%
-  unique()
-
-# Check standard run types ----------------------------------------------------
-# This function is unlikely to work on all runs due to sampID differences. 
-# It will almost definitely need to be modified to apply to the dataset at hand. 
-Full.data <- CheckStandards2(Full.data)
-
 # Get response factors for transect compounds ----------------------------------
 Full.data.RF <- Full.data %>%
   mutate(RF = Area.with.QC/Conc..uM) %>%
   filter(!Compound.Type == "Internal Standard") %>%
-  mutate(Replicate.Name = substr(Replicate.Name, 1, nchar(Replicate.Name)-2)) 
+  mutate(Replicate.Name = substr(Replicate.Name, 1, nchar(Replicate.Name)-2))
 
 # In HILIC compounds, filter mixes.
 if ("Column" %in% colnames(Full.data.RF)) {
   Full.data.RF <- Full.data.RF %>%
-    filter(str_detect(Replicate.Name, as.character(HILICMix)) | str_detect(Replicate.Name, "H2OInMatrix")) 
+    filter(str_detect(Replicate.Name, as.character(HILICMix)) | str_detect(Replicate.Name, "H2OInMatrix"))
 }
-  
+
 # Calculate RF max and min using only standards in water.
 Full.data.RF.dimensions <- Full.data.RF %>%
   filter(Type == "Standards_Water") %>%
@@ -124,9 +31,9 @@ temp.RF.ratios <- Full.data.RF %>%
   group_by(Metabolite.Name, Type) %>%
   mutate(RF.mean.per_sampleID = mean(RF, na.rm = TRUE)) %>%
   select(Replicate.Name, Metabolite.Name, Type, RF.mean.per_sampleID) %>%
-  unique() 
+  unique()
 
-print(paste("NAs or NaNs in the calculatd response factor ratios:", TRUE %in% is.na(temp.RF.ratios)))
+print(paste("NAs or NaNs in the calculated response factor ratios:", TRUE %in% is.na(temp.RF.ratios)))
 metabolite.issues <- temp.RF.ratios[is.nan(temp.RF.ratios$RF.mean.per_sampleID),]
 print(unique(metabolite.issues$Metabolite.Name))
 
@@ -137,7 +44,7 @@ Full.data.RF.ratios <- temp.RF.ratios %>%
   select(Metabolite.Name, RF.ratio) %>%
   unique()
 
-# If applicable, supplement data with information from calculated Ingalls QE.RF ratios. 
+# If applicable, supplement data with information from calculated Ingalls QE.RF ratios.
 missing.RF <- setdiff(unique(temp.RF.ratios$Metabolite.Name), Full.data.RF.ratios$Metabolite.Name)
 
 test.standards <- Ingalls.Standards %>%
@@ -150,7 +57,7 @@ Full.data.RF.ratios <- Full.data.RF.ratios %>%
   rbind(test.standards) %>%
   filter(!is.na(RF.ratio)) %>%
   mutate(RF.ratio = as.numeric(RF.ratio))
-  
+
 # Quantify samples for the BMIS'd dataset ---------------------------------
 BMISd.data.filtered <- BMISd.data %>%
   separate(Run.Cmpd, c("Sample.Name"), extra = "drop", fill = "right") %>%
@@ -158,7 +65,7 @@ BMISd.data.filtered <- BMISd.data %>%
   filter(Metabolite.Name %in% Full.data.RF.ratios$Metabolite.Name) %>%
   left_join(Full.data.RF.ratios) %>%
   left_join(Full.data.RF.dimensions %>% select(Metabolite.Name, RF.max, RF.min) %>% unique(), by = "Metabolite.Name") %>%
-  select(Metabolite.Name, FinalBMIS, Sample.Name, Adjusted.Area, everything())  
+  select(Metabolite.Name, FinalBMIS, Sample.Name, Adjusted.Area, everything())
 
 
 # Calculate umol/vial for compounds without an internal standard ----------
@@ -216,7 +123,7 @@ rm(list = c("matched.IS.compounds", "QCd.data", "IS.mid_frame", "IS.mid_frame2")
 
 
 # Add matched IS_smp info back into main frame ------------------------------------------------
-All.Info <- Quantitative.data %>% 
+All.Info <- Quantitative.data %>%
   select(Metabolite.Name, runDate:replicate, Adjusted.Area, Area.with.QC, RF.ratio:umol.in.vial.min) %>%
   unite(Sample.Name, c("runDate", "type", "SampID", "replicate"), remove = FALSE) %>%
   left_join(IS.sample.data %>% select(Sample.Name, Metabolite.Name, umol.in.vial_IS)) %>%
@@ -229,7 +136,7 @@ All.Info <- Quantitative.data %>%
 
 # Add in dilution factor and filtered volume --------------------------------------------------
 All.Info.Quantitative <- All.Info %>%
-  mutate(nmol.in.Enviro.ave = (umol.in.vial.ave*10^-6*Injection.Volume/Volume.Filtered*1000*Dilution.Factor)) %>% 
+  mutate(nmol.in.Enviro.ave = (umol.in.vial.ave*10^-6*Injection.Volume/Volume.Filtered*1000*Dilution.Factor)) %>%
   left_join(Full.data %>% select(Metabolite.Name, Emperical.Formula)) %>%
   unique()
 
@@ -288,18 +195,3 @@ Final.Quantitative.Summed <- Final.Quantitative %>%
             mol.C.Fraction.min = min(molFractionC, na.rm = T),
             mol.C.Fraction.max = max(molFractionC, na.rm = T)) %>%
   arrange(desc(Metabolite.Name))
-
-
-# Save and export files ------------------------------------
-currentDate <- Sys.Date()
-csvFileName.summed <- paste("data_processed/Quantified_Summary_", Column.Type, "_", currentDate, ".csv", sep = "")
-csvFileName.final <- paste("data_processed/Quantified_Measurements_", Column.Type, "_", currentDate, ".csv", sep = "")
-csvFileName.perID <- paste("data_processed/Quantified_perSampID_", Column.Type, "_", currentDate, ".csv", sep = "")
-
-
-write.csv(Final.Quantitative.Summed, csvFileName.summed, row.names = FALSE)
-write.csv(Final.Quantitative, csvFileName.final, row.names = FALSE)
-write.csv(All.perSampID, csvFileName.perID, row.names = FALSE)
-
-
-

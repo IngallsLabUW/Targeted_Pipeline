@@ -11,6 +11,8 @@ TODO
 - Figure out data_processed subdirectory creation
 - Rendering output inline (graphs, tables, etc.)
 - Save QuickReport to folder or intermediate place.
+- Print/Save head(IS.issues)
+- Print/save outputs from NA/NaNs in calculated response factor ratios
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -163,8 +165,69 @@ User will need to use best judgement to decide which duplicate to remove.
 source("src/MSDial_Duplicates.R")
 ```
 
-
+********
+TEXT TO GO HERE RE: WHAT TO DO WITH THE HILIC TABLE AND HOW TO MAKE FILTERING DECISIONS.
+ALSO OUTPUT FROM PREVIOUS SECTION.
+*******
 ```{r, include = FALSE}
 source("src/MSDial_BMIS.R")
-head(IS.Issues)
+```
+
+--------------------------------------------------------------
+
+Section IV: Convert from peak area to umol/vial.
+
+*Action required*
+
+Enter dilution factor, injection volume, and the filtered volume from the instrument run.
+Comment out appropriate variable blocks according to HILIC or Cyano data.
+```{r, include = FALSE}
+Dilution.Factor = 2
+Injection.Volume = 400 # nanomoles
+Volume.Filtered = 5 # liters
+
+# Cyano
+standards.pattern = "Ingalls"
+BMIS.pattern = "BMIS_Output_RP"
+QC.pattern = "QC_Output_CYANO"
+names.pattern = "Names"
+Column.Type = "RP"
+
+# HILIC
+# standards.pattern = "Ingalls"
+# BMIS.pattern = "BMIS_Output_HILIC"
+# QC.pattern = "QC_Output_HILIC"
+# names.pattern = "Names"
+# Column.Type = "HILIC"
+
+```
+
+```{r, include = FALSE}
+source("src/MSDial_Quantify_Imports.R")
+source("src/MSDial_Duplicates.R")
+```
+
+This function is unlikely to work on all runs due to sampID differences.
+It will almost definitely need to be modified to apply to the dataset at hand.
+```{r, include = FALSE}
+Full.data <- CheckStandards2(Full.data)
+```
+
+```{r, include = FALSE}
+source("src/MSDial_Quantify.R")
+```
+
+
+Save and export files 
+
+```{r, include = FALSE}
+currentDate <- Sys.Date()
+csvFileName.summed <- paste("data_processed/Quantified_Summary_", Column.Type, "_", currentDate, ".csv", sep = "")
+csvFileName.final <- paste("data_processed/Quantified_Measurements_", Column.Type, "_", currentDate, ".csv", sep = "")
+csvFileName.perID <- paste("data_processed/Quantified_perSampID_", Column.Type, "_", currentDate, ".csv", sep = "")
+
+
+write.csv(Final.Quantitative.Summed, csvFileName.summed, row.names = FALSE)
+write.csv(Final.Quantitative, csvFileName.final, row.names = FALSE)
+write.csv(All.perSampID, csvFileName.perID, row.names = FALSE)
 ```
