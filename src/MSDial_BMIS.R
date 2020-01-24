@@ -1,75 +1,5 @@
-source("Functions.R")
+# B-MIS 
 
-# Enter user data --------------------------------------------------
-# Set parameters
-cut.off <- 0.4 # 30% decrease in RSD of pooled injections, aka improvement cutoff
-cut.off2 <- 0.1 # RSD minimum
-
-# Comment out appropriate variable block below according to HILIC or Cyano data.
-
-# Cyano
-Column.Type = "RP"
-sample.key.pattern = "CYANO"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_CYANO"
-
-# HILIC
-# Column.Type = "HILIC"
-# sample.key.pattern = "HILIC"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_HILIC"
-
-# Imports -----------------------------------------------------------------
-# Sample Key
-filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = sample.key.pattern))
-filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
-
-SampKey.all <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
-  rename(Replicate.Name = Sample.Name) %>%
-  mutate(Replicate.Name = Replicate.Name %>%
-           str_replace("-",".")) 
-
-# Internal Standards
-filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = standards.pattern))
-filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
-
-Internal.Standards <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
-  filter(Column == Column.Type) %>%
-  filter(Compound.Type == "Internal Standard")
-Internal.Standards$Compound.Name <- TrimWhitespace(Internal.Standards$Compound.Name)
-
-# QC'd output
-filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = QC.pattern))
-filepath <- file.path('data_processed', paste(filename, ".csv", sep = ""))
-
-QCd.data <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
-  slice(-1:-6) %>%
-  select(-c(Description, Value)) %>%
-  filter(!str_detect(Replicate.Name, "Blk|Std")) %>%
-  mutate(Replicate.Name = Replicate.Name %>%
-           str_replace("-",".")) 
-
-# If data is HILIC, identify duplicates and decide which to remove --------------------------------------------------
-# IdentifyDuplicates function will confirm if instrument column data exists.
-# User will need to use best judgement to decide which duplicate to remove.
-HILICS.duplicates <- IdentifyDuplicates(QCd.data)
-
-if (exists("HILICS.duplicates") == TRUE) {
-  duplicates.testing <- QCd.data %>%
-    filter(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name) %>%
-    group_by(Metabolite.Name, Column) %>%
-    summarize(mean(Area.with.QC, na.rm = TRUE))
-
-  } else {
-  print("Non-HILIC data: no duplicates to detect.")
-}
-
-if (exists("duplicates.testing") == TRUE) {
-  QCd.data <- QCd.data %>%
-    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
-} else {
-  print("Non-HILIC data: no duplicates to remove.")
-}
 
 # Match QC'd data with Internal Standards list -----------------------------------------------------------------
 Data.withIS <- QCd.data %>%
@@ -83,22 +13,22 @@ Int.Stds.data <- Data.withIS %>%
   select(Replicate.Name, Metabolite.Name, Area.with.QC) %>%
   mutate(Mass.Feature = Metabolite.Name) %>%
   select(-Metabolite.Name) #%>%
-  #filter(!Mass.Feature == "Guanosine Monophosphate, 15N5")
+#filter(!Mass.Feature == "Guanosine Monophosphate, 15N5")
 
 # Add injection volume -----------------------------------------------------------------
 SampKey <- SampKey.all %>%
-  filter(Replicate.Name %in% Int.Stds.data$Replicate.Name) %>% 
+  filter(Replicate.Name %in% Int.Stds.data$Replicate.Name) %>%
   select(Replicate.Name, Bio.Normalization) %>%
   mutate(Mass.Feature = "Inj_vol",
          Area.with.QC = Bio.Normalization) %>%
   select(Replicate.Name, Area.with.QC, Mass.Feature)
 
-# Create Internal standard data to identify problematic compounds/replicates-----------------------------------------------------------------
-Int.Stds.data <- rbind(Int.Stds.data, SampKey) #%>%
-  # filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE)))
+# Create Internal standard data to identify problematic compounds/replicates------------------------------------
+Int.Stds.data <- rbind(Int.Stds.data, SampKey) 
 
 # Identify internal standards without an Area, i.e. any NA values.
 IS.Issues <- Int.Stds.data[is.na(Int.Stds.data$Area.with.QC), ]
+
 
 # Visualize raw areas of Internal Standards -----------------------------------------------------------------
 IS.Raw.Area.Plot <- ggplot(Int.Stds.data, aes(x = Replicate.Name, y = Area.with.QC)) +
@@ -109,19 +39,28 @@ IS.Raw.Area.Plot <- ggplot(Int.Stds.data, aes(x = Replicate.Name, y = Area.with.
         legend.position = "top",
         strip.text = element_text(size = 10)) +
   ggtitle("Internal Standard Raw Areas")
+
+currentDate <- Sys.Date()
+plotFileName <- paste("figures/IS.Raw.Areas_", currentDate, ".png", sep = "")
+
+ggsave(file = plotFileName, dpi = 600, width = 8, height = 6, units = "in")
 print(IS.Raw.Area.Plot)
 
-
-# Edit data so names match, test that names are equal across sample sets-----------------------------------------------------------------
+# Edit data so names match, test that names are equal across sample sets------------------------------------------
 Data.long  <- Data.NoIS %>%
   rename(Mass.Feature = Metabolite.Name) %>%
   select(Replicate.Name, Mass.Feature, Area.with.QC) %>%
-  #filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
+  # Uncomment the next line to test the stop error message below.
+  # filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
   arrange(Replicate.Name)
 
 test_isdata <- as.data.frame(sort(unique(Int.Stds.data$Replicate.Name)), stringsAsFactors = FALSE)
 test_long <- as.data.frame(sort(unique(Data.long$Replicate.Name)), stringsAsFactors = FALSE)
-identical(test_isdata[[1]], test_long[[1]])
+test <- identical(test_isdata[[1]], test_long[[1]])
+print(paste("Your replicate names are identical:", test))
+
+if(test == FALSE) 
+  stop("Error: Your replicate names are not matched across datasets!")
 
 # Caluclate mean values for each Internal Standard----------------------------------------------------------------
 Int.Stds.means <- Int.Stds.data %>%
@@ -151,7 +90,7 @@ for (i in 1:length(unique(Int.Stds.data$Mass.Feature))) {
 Data.area.norm <- do.call(rbind, Split_Dat) %>%
   select(-IS_Area, -Average.Area)
 
-# Standardize name structure to: Date_type_ID_replicate_anythingextra ----------------------------------------------------------------
+# Standardize name structure to: Date_type_ID_replicate_anythingextra ----------------------------------------------------
 Mydata.new <- Data.area.norm %>%
   separate(Replicate.Name, c("runDate", "type", "SampID", "replicate"), "_") %>%
   mutate(Run.Cmpd = paste(Data.area.norm$Replicate.Name, Data.area.norm$Mass.Feature))
@@ -168,7 +107,7 @@ Poodata <- Mydata.new %>%
   mutate(RSD_ofPoo_IND = ifelse(RSD_ofPoo_IND == "NaN", NA, RSD_ofPoo_IND)) %>%
   group_by(Mass.Feature, MIS) %>%
   summarise(RSD_ofPoo =  mean(RSD_ofPoo_IND, na.rm = TRUE)) %>%
-  mutate(RSD_ofPoo = ifelse(RSD_ofPoo == "NaN", NA, RSD_ofPoo)) 
+  mutate(RSD_ofPoo = ifelse(RSD_ofPoo == "NaN", NA, RSD_ofPoo))
 
 
 Poodata <- Poodata %>%
@@ -178,9 +117,9 @@ Poodata <- Poodata %>%
 
 # Get the original RSD, calculate RSD change, decide if MIS is acceptable ----------------------------------------------------
 Poodata <- left_join(Poodata, Poodata %>%
-                            filter(MIS == "Inj_vol" ) %>%
-                            mutate(Orig_RSD = RSD_ofPoo) %>%
-                            select(-RSD_ofPoo, -MIS)) %>%
+                       filter(MIS == "Inj_vol" ) %>%
+                       mutate(Orig_RSD = RSD_ofPoo) %>%
+                       select(-RSD_ofPoo, -MIS)) %>%
   mutate(del_RSD = (Orig_RSD - RSD_ofPoo)) %>%
   mutate(percent.Change = del_RSD/Orig_RSD) %>%
   mutate(accept_MIS = (percent.Change > cut.off & Orig_RSD > cut.off2))
@@ -190,7 +129,7 @@ Poodata <- left_join(Poodata, Poodata %>%
 # Adds a column that has the BMIS, not just Poo.Picked.IS
 # Changes the FinalBMIS to inject_volume if it's no good
 Fixed.poodata <- Poodata %>%
-  filter(MIS == Poo.Picked.IS) %>% 
+  filter(MIS == Poo.Picked.IS) %>%
   mutate(FinalBMIS = ifelse(accept_MIS == "FALSE", "Inj_vol", Poo.Picked.IS)) %>%
   mutate(FinalRSD = RSD_ofPoo)
 
@@ -208,6 +147,8 @@ QuickReport <- print(paste("Percent of Mass Features that picked a BMIS:",
                            "RSD minimum cutoff", cut.off2,
                            sep = " "))
 
+reportFileName = paste("data_processed/QuickReport", file.pattern, "_", currentDate, ".txt", sep = "")
+cat(QuickReport, file = reportFileName)
 
 # Evaluate and visualize the results of your BMIS cutoff----------------------------------------------------------------
 IS_toISdat <- Mydata.new %>%
@@ -226,13 +167,17 @@ ISTest_plot <- ggplot() +
   geom_point(dat = injectONlY_toPlot, aes(x = RSD_ofPoo, y = RSD_of_Smp), size = 3) +
   facet_wrap(~ Mass.Feature) +
   ggtitle(paste("Results of BMIS Cutoff:", cut.off, "RSD decrease,", cut.off2, "RSD minimum."))
+
+plotFileName <- paste("figures/BMIS_Evaluation_", currentDate, ".png", sep = "")
+
+ggsave(file = plotFileName, dpi = 600, width = 8, height = 6, units = "in")
 print(ISTest_plot)
 
 
 # Return data that is normalized via BMIS----------------------------------------------------------------
 BMIS.normalized.data <- New.poodata %>% select(Mass.Feature, FinalBMIS, Orig_RSD, FinalRSD) %>%
   left_join(Mydata.new, by = "Mass.Feature") %>%
-  filter(MIS == FinalBMIS) 
+  filter(MIS == FinalBMIS)
 
 currentDate <- Sys.Date()
 csvFileName <- paste("data_processed/BMIS_Output_", Column.Type, "_", currentDate, ".csv", sep = "")
@@ -240,10 +185,4 @@ csvFileName <- paste("data_processed/BMIS_Output_", Column.Type, "_", currentDat
 
 write.csv(BMIS.normalized.data, csvFileName, row.names = FALSE)
 
-rm(list = ls())
-
-
-
-
-
-
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "QuickReport")], lsf.str()))
