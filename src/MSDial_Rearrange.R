@@ -79,7 +79,7 @@ if (TRUE %in% grepl("positive|negative", names(.GlobalEnv), ignore.case = TRUE))
 combined.final <- StandardizeMetabolites(combined.final)
 
 currentDate <- Sys.Date()
-csvFileName <- paste("data_processed/MSDial_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
+csvFileName <- paste("data_intermediate/MSDial_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
 
 write.csv(combined.final, csvFileName, row.names = FALSE)
 

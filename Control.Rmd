@@ -1,5 +1,5 @@
 ---
-title: "Targeted MSDial Pipeline"
+title: "Targeted MSDial Pipeline: QE"
 author: "RLionheart"
 date: "12/26/2019"
 output:
@@ -8,12 +8,19 @@ output:
 editor_options:
   chunk_output_type: inline
 ---
-Add info here.
+
+This markdown script controls the targeted pipeline for QE Cyano and HILIC data run through MSDial metabolomics software.
+
+It contains four major sections:
+Section I: Import and cleaning/rearranging of data.
+Section II: Quality control using user-defined parameters.
+Section III: Applying Best-Matched Internal Standard (B-MIS).
+Section IV: Quantifying peak area to umol/vial when possible.
 
 TODO
-- Figure out data_processed subdirectory creation
+- Change import sections in files to flexible function.
+
 - Rendering output inline (graphs, tables, etc.)
-- Save QuickReport to folder or intermediate place.
 - Print/Save head(IS.issues)
 - Print/save outputs from NA/NaNs in calculated response factor ratios
 
@@ -28,24 +35,44 @@ options(scipen=999)
 
 source("src/Functions.R")
 
-## TEMPORARY ##
-f <- list.files("data_processed/", include.dirs = F, full.names = T, recursive = T)
-file.remove(f)
-f <- list.files("figures/", include.dirs = F, full.names = T, recursive = T)
+processed.folder <- "data_processed" 
+figures.folder <- "figures"
+intermediate.folder <- "data_intermediate"
+dir.create(file.path(".", processed.folder))  
+dir.create(file.path(".", figures.folder))  
+dir.create(file.path(".", intermediate.folder))  
+
+if (length(dir(path = "data_processed/")) == 0) {
+  print("Data_processed subdirectory is ready for new data.")
+} else {
+  print("Warning: data_processed subdirectory is not empty. Empty contents before continuing.")
+}
+```
+
+
+If you would like to empty the data_processed/, data_intermediate, and figures/ subdirectories, run the following code.
+```{r, include = FALSE}
+toClear <- c("data_processed/", "data_intermediate", "figures/")
+f <- list.files(toClear, include.dirs = F, full.names = T, recursive = T)
 file.remove(f)
 ```
 
-This script controls the targeted pipeline for QE Cyano and HILIC data run through the MSDial metabolomics software.
-
-It contains four major sections:
-Section I: Import and cleaning/rearranging of data.
-Section II: Quality control using user-defined parameters.
-Section III: Applying Best-Matched Internal Standard (B-MIS).
-Section IV: Quantifying peak area to umol/vial when possible.
-
---------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
 
 Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN).
+
+In the MSDial datasets:
+Set header, filter unknowns.
+Change variable classes from character/factor to numeric, according to column.
+Rearrange the dataframes and combine to a single frame in long format.
+Standardize dataset by removing "Ingalls_" prefixes from compound names, and removing the syntactically correct "X" from Replicates.
+
+***
+Inputs: 
+"data_raw/*file.pattern*.csv
+Outputs: 
+"data_intermediates/MSDial_combined_*file.pattern*_*DATE*.csv"
+***
 
 *User action required*
 Comment or uncomment the file.pattern and matching.pattern required for your files.
@@ -64,8 +91,6 @@ matching.pattern <- "positive|negative"
 source("src/MSDial_Import.R")
 ```
 
-
-Reassign variables to new names.
 
 *User action required*
 Comment or uncomment the block of variable names appropriate for your run.
@@ -92,16 +117,7 @@ SN.negative   <- SN_HILICNeg_Example
 
 ```
 
-In the MSDial datasets:
-Set header, filter unknowns.
-Change variable classes from character/factor to numeric, according to column.
-Rearrange the dataframes and combine to a single frame in long format.
-Standardize dataset by removing "Ingalls_" prefixes from compound names, and removing the syntactically correct "X" from Replicates.
-
-Inputs: 
-Area, Mz, RT and SN datasets as defined in the previous step, existing in the global environment.
-Outputs: 
-"data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
+Rearrange and export.
 ```{r Dataset rearrangement, include=FALSE}
 source("src/MSDial_Rearrange.R")
 ```
@@ -109,6 +125,25 @@ source("src/MSDial_Rearrange.R")
 --------------------------------------------------------------
 
 Section II: Quality Control and flagging of problematic peaks.
+
+In the Quality Control Step:
+Import files.
+Identify run types and check if all are present (blk, smp, std, poo).
+Create a table of standard retention times (RT) for comparison.
+Create a table of areas from blank runs for comparison.
+Flag peaks in the dataset that fall outside of user-defined bounds.
+Add parameter values to the top of the final file and save to the data_processed/ folder.
+
+***
+Inputs: 
+"data_intermediate/MSDial_combined_*file.pattern*_*DATE*.csv"
+
+Outputs: 
+"data_intermediate/MSDial_RT.table_*DATE*.csv"
+"data_intermediate/MSDial_final.table_*DATE*.csv"
+"data_intermediate/MSDial_blank.table_*DATE*.csv"
+"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
+***
 
 *User action required*
 Define parameters for quality control. These act as comparison for filtering out data.
@@ -120,19 +155,7 @@ blk.thresh <- 0.3
 SN.min     <- 4
 ```
 
-In the Quality Control Step:
-Import files.
-Identify run types and check if all are present (blk, smp, std, poo).
-Create a table of standard retention times (RT) for comparison.
-Create a table of areas from blank runs for comparison.
-Flag peaks in the dataset that fall outside of user-defined bounds.
-Add parameter values to the top of the final file and save to the data_processed/ folder.
-
-
-Inputs: 
-"data_processed/MSDial_combined_*file.pattern*_*DATE*.csv"
-Outputs: 
-"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
+Run Quality Control and export.
 ```{r MSDial QC, include=FALSE}
 source("src/MSDial_QC.R")
 ```
@@ -140,14 +163,31 @@ source("src/MSDial_QC.R")
 Inspect the blank.table, final.table, and RT.table values. 
 Ensure that they look normal before proceeding to clear the environment in the next step.
 ```{r, include=FALSE}
+currentDate <- Sys.Date()
+csvFileName <- paste("data_processed/MSDial_QC_Output_", file.pattern, "_", currentDate, ".csv", sep = "")
+
+tables <- grep("table", names(.GlobalEnv), value = TRUE, ignore.case = TRUE)
+tablelist <- do.call("list", mget(tables))
+
+# Write intermediate data
+invisible(lapply(tables, 
+                 function(x) write.csv(get(x), file=paste("data_intermediate/MSDial_", x, "_", currentDate, ".csv", sep = ""))))
+# Write final data
+write.csv(final.table, csvFileName, row.names = FALSE)
+
 rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
 ```
-
 
 --------------------------------------------------------------
 
 Section III: Best-Matched Internal Standard (B-MIS)
 
+In the BMIS step:
+Match QC'd data with Internal Standards list.
+Identify internal standards and visualize those areas.
+Test if replicate names are identical across the data and the sample key. Stop the analysis process if not.
+
+***
 Inputs:
 "data_extras/*Sample_Key_from_instrument*.csv"
 "data_extras/Ingalls_Lab_Standards.csv"
@@ -156,9 +196,9 @@ Inputs:
 Outputs:
 "figures/IS.Raw.Areas.png"
 "figures/BMIS_Evalution.png"
+"data_intermediate/QuickReport_*file.pattern*_*DATE*.txt"
 "data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
-"data_processed/QuickReport_*file.pattern*_*DATE*.txt"
-
+***
 
 *User action required*
 Enter user data for cut off parameters.
@@ -197,22 +237,23 @@ IdentifyDuplicates function will confirm if instrument column data exists.
 User will need to use best judgement to decide which duplicate to remove.
 ```{r Check duplicates, include=}
 source("src/MSDial_Duplicates.R")
+currentDate = Sys.Date()
+csvFileName <- paste("data_intermediate/MSDial_HILIC.duplicates_", currentDate, ".csv", sep = "")
 
 # Using the duplicates.testing table, decide which detected compound to keep, the positive or negative.
 
 if (exists("duplicates.testing") == TRUE) {
   QCd.data <- QCd.data %>%
     filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
+  
+  write.csv(duplicates.testing, csvFileName, row.names = FALSE)
 } else {
   print("Non-HILIC data: no duplicates to remove.")
 }
 
 ```
 
-In the BMIS step:
-Match QC'd data with Internal Standards list.
-Identify internal standards and visualize those areas.
-Test if replicate names are identical across the data and the sample key. Stop the analysis process if not.
+Run BMIS.
 ```{r BMIS, include=}
 source("src/MSDial_BMIS.R")
 ```
@@ -221,6 +262,14 @@ source("src/MSDial_BMIS.R")
 
 Section IV: Convert from peak area to umol/vial.
 
+In the quantify step:
+Get response factors and response factor ratios.
+Quantify samples without an internal standard.
+Quantify samples with an internal standard.
+Accounting for dilution and filtered volume, calculate environmental quantities.
+Summarize carbon and nitrogen.
+
+***
 Inputs:
 "data_extras/Ingalls_Lab_Standards.csv"
 "data_extras/InternalStandardNames.csv"
@@ -228,10 +277,11 @@ Inputs:
 "data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
 
 Outputs:
+"data_intermediate/MSDial_ResponseFactorRatios_*DATE*.csv"
 "data_processed/Quantified_Summary_*Column.Type*_*DATE*.csv
 "data_processed/Quantified_Measurements*Column.Type*_*DATE*.csv
 "data_processed/Quantified_perSampID_*Column.Type*_*DATE*.csv
-
+***
 
 *User action required*
 Enter dilution factor, injection volume, and the filtered volume from the instrument run.
@@ -261,22 +311,23 @@ Column.Type = "HILIC"
 ```
 
 Import required files for quantification.
-```{r Quantify imports, include=}
+```{r Quantify imports, include=FALSE}
 source("src/MSDial_Quantify_Imports.R")
 ```
 
 *User action required*
 Repeat the HILIC duplicates step.
 ```{r Check duplicates, include=}
-source("src/MSDial_Duplicates.R")
+check.duplicates <- list.files("data_intermediate", pattern = "duplicate", full.names = TRUE)
 
-# Using the duplicates.testing table, decide which detected compound to keep, the positive or negative.
-
-if (exists("duplicates.testing") == TRUE) {
+if (check.duplicates == 0) {
+  print("No HILIC data exists.")
+} else {
+  print("Filtering out chosen duplicates.")
+  
+  HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE)
   QCd.data <- QCd.data %>%
     filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
-} else {
-  print("Non-HILIC data: no duplicates to remove.")
 }
 ```
 
@@ -289,16 +340,12 @@ It will almost definitely need to be modified to apply to the dataset at hand.
 Full.data <- CheckStandards2(Full.data)
 ```
 
-In the quantify step:
-Get response factors and response factor ratios.
-Quantify samples without an internal standard.
-Quantify samples with an internal standard.
-Accounting for dilution and filtered volume, calculate environmental quantities.
-Summarize carbon and nitrogen.
+Quantify.
 ```{r, include = FALSE}
 source("src/MSDial_Quantify.R")
 ```
 
+Review the "Final" files to ensure everything is correct.
 
 Save and export files.
 ```{r, include = FALSE}

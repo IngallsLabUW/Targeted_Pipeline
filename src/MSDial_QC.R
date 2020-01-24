@@ -1,8 +1,8 @@
 # Quality control script
 
 # Import files  ----------------------------
-filename <- RemoveCsv(list.files(path = 'data_processed/', pattern = file.pattern))
-filepath <- file.path('data_processed', paste(filename, ".csv", sep = ""))
+filename <- RemoveCsv(list.files(path = 'data_intermediate/', pattern = file.pattern))
+filepath <- file.path('data_intermediate', paste(filename, ".csv", sep = ""))
 
 combined <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
   select(Replicate.Name:Alignment.ID, Metabolite.Name) %>%
@@ -72,10 +72,5 @@ Value <- as.character(c(NA, NA, area.min, RT.flex, blk.thresh, SN.min))
 
 df <- data.frame(Description, Value)
 final.table <- bind_rows(df, final.table)
-
-currentDate <- Sys.Date()
-csvFileName <- paste("data_processed/MSDial_QC_Output_", file.pattern, "_", currentDate, ".csv", sep = "")
-
-write.csv(final.table, csvFileName, row.names = FALSE)
 
 rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "final.table", "RT.table", "blank.table")], lsf.str()))

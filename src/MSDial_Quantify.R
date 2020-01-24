@@ -42,7 +42,8 @@ print(unique(metabolite.issues$Metabolite.Name))
 Full.data.RF.ratios <- temp.RF.ratios %>%
   filter(!(is.infinite(RF.mean.per_sampleID) | is.nan(RF.mean.per_sampleID))) %>%
   group_by(Metabolite.Name) %>% filter(n() >= 3) %>%
-  mutate(RF.ratio = ((RF.mean.per_sampleID[Type == "Standards_Matrix"] - RF.mean.per_sampleID[Type == "Water_Matrix"]) / RF.mean.per_sampleID[Type == "Standards_Water"])) %>%
+  mutate(RF.ratio = ((RF.mean.per_sampleID[Type == "Standards_Matrix"] - RF.mean.per_sampleID[Type == "Water_Matrix"]) 
+                     / RF.mean.per_sampleID[Type == "Standards_Water"])) %>%
   select(Metabolite.Name, RF.ratio) %>%
   unique()
 
@@ -59,6 +60,9 @@ Full.data.RF.ratios <- Full.data.RF.ratios %>%
   rbind(test.standards) %>%
   filter(!is.na(RF.ratio)) %>%
   mutate(RF.ratio = as.numeric(RF.ratio))
+
+currentDate = Sys.Date()
+write.csv(Full.data.RF.ratios, paste("data_intermediate/MSDIAL_ResponseFactorRatios_", currentDate, ".csv", sep = ""))
 
 # Quantify samples for the BMIS'd dataset ---------------------------------
 BMISd.data.filtered <- BMISd.data %>%
@@ -168,7 +172,7 @@ All.Info.Summed <- All.Info.Molecules %>%
   arrange(desc(nmol.Enviro.med))
 
 # Summarize total carbon and nitrogen for each compound ------------------------------------
-All.perSampID <- All.Info.Molecules %>%
+Final.All.perSampID <- All.Info.Molecules %>%
   select(SampID, nmol.C.ave, nmol.N.ave) %>%
   group_by(SampID) %>%
   summarise(totalCmeasured_nM_perID = sum(as.numeric(nmol.C.ave), na.rm = TRUE),
@@ -178,7 +182,7 @@ All.perSampID <- All.Info.Molecules %>%
 # Calculate mole fractions of each compound ------------------------------------
 Final.Quantitative <- All.Info.Molecules %>%
   unique() %>%
-  left_join(All.perSampID) %>%
+  left_join(Final.All.perSampID) %>%
   mutate(ratioCN = totalCmeasured_nM_perID / totalNmeasured_nM_perID) %>%
   mutate(molFractionC = nmol.C.ave/totalCmeasured_nM_perID,
          molFractionN = nmol.N.ave/totalNmeasured_nM_perID) %>%

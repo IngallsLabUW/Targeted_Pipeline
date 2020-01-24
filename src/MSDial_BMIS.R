@@ -1,6 +1,5 @@
 # B-MIS 
 
-
 # Match QC'd data with Internal Standards list -----------------------------------------------------------------
 Data.withIS <- QCd.data %>%
   filter(Metabolite.Name %in% Internal.Standards$Compound.Name)
@@ -147,7 +146,7 @@ QuickReport <- print(paste("Percent of Mass Features that picked a BMIS:",
                            "RSD minimum cutoff", cut.off2,
                            sep = " "))
 
-reportFileName = paste("data_processed/QuickReport", file.pattern, "_", currentDate, ".txt", sep = "")
+reportFileName = paste("data_intermediate/QuickReport", file.pattern, "_", currentDate, ".txt", sep = "")
 cat(QuickReport, file = reportFileName)
 
 # Evaluate and visualize the results of your BMIS cutoff----------------------------------------------------------------
@@ -185,4 +184,4 @@ csvFileName <- paste("data_processed/BMIS_Output_", Column.Type, "_", currentDat
 
 write.csv(BMIS.normalized.data, csvFileName, row.names = FALSE)
 
-rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "QuickReport")], lsf.str()))
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
