@@ -17,14 +17,11 @@ Section II: Quality control using user-defined parameters.
 Section III: Applying Best-Matched Internal Standard (B-MIS).
 Section IV: Quantifying peak area to umol/vial when possible.
 
-TODO
+TODO (rlionheart):
 - Change import sections in files to flexible function.
 
-- Rendering output inline (graphs, tables, etc.)
-- Print/Save head(IS.issues)
-- Print/save outputs from NA/NaNs in calculated response factor ratios
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(anytime)
@@ -43,9 +40,9 @@ dir.create(file.path(".", figures.folder))
 dir.create(file.path(".", intermediate.folder))  
 
 if (length(dir(path = "data_processed/")) == 0) {
-  print("Data_processed subdirectory is ready for new data.")
+  cat("\nData_processed subdirectory has been created and is ready for new data.")
 } else {
-  print("Warning: data_processed subdirectory is not empty. Empty contents before continuing.")
+  cat("Warning: data_processed subdirectory is not empty. Empty contents before continuing.\n")
 }
 ```
 
@@ -79,12 +76,12 @@ Comment or uncomment the file.pattern and matching.pattern required for your fil
 
 ```{r Pattern matching, include=FALSE}
 # Cyano
-# file.pattern <- "CYANO"
-# matching.pattern <- "RP.Cyano"
+file.pattern <- "CYANO"
+matching.pattern <- "RP.Cyano"
 
 # HILIC
-file.pattern <- "HILIC"
-matching.pattern <- "positive|negative"
+# file.pattern <- "HILIC"
+# matching.pattern <- "positive|negative"
 ```
 
 ```{r MSDial Imports, include=FALSE}
@@ -93,27 +90,29 @@ source("src/MSDial_Import.R")
 
 
 *User action required*
+Enter the existing filenames of your run. The above code assigns the variables in R to their filename in the directory, so if your positive Area file is "data_processed/PositiveArea.csv", it will be imported to this code as PositiveArea. Those files need to be reassigned to Area.positive so the rest of the code will know which files to edit for the pipeline steps.
+
 Comment or uncomment the block of variable names appropriate for your run.
 
 ```{r Dataset reassignment, include=FALSE}
 # Comment out the run not being used.
 
 # Cyano variables: 
-# Area.RP.Cyano <- Area_CYANO_EddyTransect
-# Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
-# RT.RP.Cyano   <- RT_CYANO_EddyTransect
-# SN.RP.Cyano   <- SN_CYANO_EddyTransect
+Area.RP.Cyano <- Area_CYANO_EddyTransect
+Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
+RT.RP.Cyano   <- RT_CYANO_EddyTransect
+SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 # HILIC variables: 
-Area.positive <- Area_HILICPos_Example
-Mz.positive   <- Mz_HILICPos_Example
-RT.positive   <- RT_HILICPos_Example
-SN.positive   <- SN_HILICPos_Example
-
-Area.negative <- Area_HILICNeg_Example
-Mz.negative   <- Mz_HILICNeg_Example
-RT.negative   <- RT_HILICNeg_Example
-SN.negative   <- SN_HILICNeg_Example
+# Area.positive <- Area_HILICPos_Example
+# Mz.positive   <- Mz_HILICPos_Example
+# RT.positive   <- RT_HILICPos_Example
+# SN.positive   <- SN_HILICPos_Example
+# 
+# Area.negative <- Area_HILICNeg_Example
+# Mz.negative   <- Mz_HILICNeg_Example
+# RT.negative   <- RT_HILICNeg_Example
+# SN.negative   <- SN_HILICNeg_Example
 
 ```
 
@@ -156,7 +155,7 @@ SN.min     <- 4
 ```
 
 Run Quality Control and export.
-```{r MSDial QC, include=FALSE}
+```{r MSDial QC, include=TRUE}
 source("src/MSDial_QC.R")
 ```
 
@@ -183,9 +182,15 @@ rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
 Section III: Best-Matched Internal Standard (B-MIS)
 
 In the BMIS step:
+If working with HILIC data, identify and remove duplicates. Justify your decision.
 Match QC'd data with Internal Standards list.
 Identify internal standards and visualize those areas.
 Test if replicate names are identical across the data and the sample key. Stop the analysis process if not.
+Identify/visualize internal standards. Look over it to ensure that things are looking more or less "normal".
+Using pooled and sample runs, calculate internal standard averages. 
+Create an adjusted area for all pooled and sample runs by comparing each mass feature to each internal standard. 
+Calculate RSD for each mass feature/internal standard pair, and use this to choose a matched internal standard.
+Decide whether to accept a B-MIS or not, according to user-defined values.
 
 ***
 Inputs:
@@ -196,8 +201,9 @@ Inputs:
 Outputs:
 "figures/IS.Raw.Areas.png"
 "figures/BMIS_Evalution.png"
-"data_intermediate/QuickReport_*file.pattern*_*DATE*.txt"
-"data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
+"data_intermediate/MSDial_InternalStdIssues_*DATE*.csv"
+"data_intermediate/MSDial_QuickReport_*file.pattern*_*DATE*.txt"
+"data_processed/MSDial_BMIS_Output_*file.pattern*_*DATE*.csv"
 ***
 
 *User action required*
@@ -214,20 +220,20 @@ cut.off2 <- 0.1
 Comment out appropriate variable blocks according to HILIC or Cyano data.
 ```{r Cyano HILIC assignment, include=FALSE}
 # Cyano
-# Column.Type = "RP"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_CYANO"
+Column.Type = "RP"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_CYANO"
 
 # HILIC
-Column.Type = "HILIC"
-sample.key.pattern = "HILIC"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_HILIC"
+# Column.Type = "HILIC"
+# sample.key.pattern = "HILIC"
+# standards.pattern = "Ingalls"
+# QC.pattern = "QC_Output_HILIC"
 
 ```
 
 Import required files.
-```{r BMIS imports, include=}
+```{r BMIS imports, include=FALSE}
 source("src/MSDial_BMIS_Imports.R")
 ```
 
@@ -235,7 +241,7 @@ source("src/MSDial_BMIS_Imports.R")
 If data is HILIC, identify duplicates and decide which to remove 
 IdentifyDuplicates function will confirm if instrument column data exists.
 User will need to use best judgement to decide which duplicate to remove.
-```{r Check duplicates, include=}
+```{r Check duplicates, include=TRUE}
 source("src/MSDial_Duplicates.R")
 currentDate = Sys.Date()
 csvFileName <- paste("data_intermediate/MSDial_HILIC.duplicates_", currentDate, ".csv", sep = "")
@@ -254,7 +260,7 @@ if (exists("duplicates.testing") == TRUE) {
 ```
 
 Run BMIS.
-```{r BMIS, include=}
+```{r BMIS, include=TRUE}
 source("src/MSDial_BMIS.R")
 ```
 
@@ -295,18 +301,18 @@ Volume.Filtered = 5 # liters
 Comment out appropriate variable blocks according to HILIC or Cyano data.
 ```{r, include=FALSE}
 # Cyano
-# standards.pattern = "Ingalls"
-# BMIS.pattern = "BMIS_Output_RP"
-# QC.pattern = "QC_Output_CYANO"
-# names.pattern = "Names"
-# Column.Type = "RP"
+standards.pattern = "Ingalls"
+BMIS.pattern = "BMIS_Output_RP"
+QC.pattern = "QC_Output_CYANO"
+names.pattern = "Names"
+Column.Type = "RP"
 
 # HILIC
-standards.pattern = "Ingalls"
-BMIS.pattern = "BMIS_Output_HILIC"
-QC.pattern = "QC_Output_HILIC"
-names.pattern = "Names"
-Column.Type = "HILIC"
+# standards.pattern = "Ingalls"
+# BMIS.pattern = "BMIS_Output_HILIC"
+# QC.pattern = "QC_Output_HILIC"
+# names.pattern = "Names"
+# Column.Type = "HILIC"
 
 ```
 
@@ -317,10 +323,10 @@ source("src/MSDial_Quantify_Imports.R")
 
 *User action required*
 Repeat the HILIC duplicates step.
-```{r Check duplicates, include=}
+```{r Check duplicates, include=TRUE}
 check.duplicates <- list.files("data_intermediate", pattern = "duplicate", full.names = TRUE)
 
-if (check.duplicates == 0) {
+if (length(check.duplicates) == 0) {
   print("No HILIC data exists.")
 } else {
   print("Filtering out chosen duplicates.")
@@ -336,12 +342,12 @@ Check which kinds of standards have been run.
 This function is unlikely to work on all runs due to sampID differences.
 It will almost definitely need to be modified to apply to the dataset at hand.
 *****************************************************************************
-```{r, include = FALSE}
+```{r, include = TRUE}
 Full.data <- CheckStandards2(Full.data)
 ```
 
 Quantify.
-```{r, include = FALSE}
+```{r, include = TRUE}
 source("src/MSDial_Quantify.R")
 ```
 
@@ -357,7 +363,7 @@ csvFileName.perID <- paste("data_processed/Quantified_perSampID_", Column.Type, 
 
 write.csv(Final.Quantitative.Summed, csvFileName.summed, row.names = FALSE)
 write.csv(Final.Quantitative, csvFileName.final, row.names = FALSE)
-write.csv(All.perSampID, csvFileName.perID, row.names = FALSE)
+write.csv(Final.All.perSampID, csvFileName.perID, row.names = FALSE)
 ```
 
 Clear environment.

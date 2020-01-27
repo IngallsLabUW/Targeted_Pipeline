@@ -164,7 +164,8 @@ StandardizeMetabolites <- function(df) {
   #   df.standardized: Dataframe with above modifications.
   #
   df.standardized <- df %>%
-    mutate(Metabolite.Name = ifelse(str_detect(Metabolite.Name, "Ingalls_"), sapply(strsplit(Metabolite.Name, "_"), `[`, 2), Metabolite.Name)) 
+    mutate(Metabolite.Name = ifelse(str_detect(Metabolite.Name, "Ingalls_"), 
+                                    sapply(strsplit(Metabolite.Name, "_"), `[`, 2), Metabolite.Name)) 
   
   df.standardized$Replicate.Name <- gsub("^.{0,1}", "", df.standardized$Replicate.Name)
   
@@ -178,36 +179,36 @@ TrimWhitespace <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 # Unused functions --------------------------------------------------------
 
-StandardizeVariables <- function(df) {
-  if (c("ReplicateName", "AreaValue", "MZValue", "RTValue", "SNValue") %in% colnames(df))
-  {
-    df <- df %>%
-      rename(Replicate.Name = ReplicateName) %>%
-      rename(Area.Value = AreaValue) %>%
-      rename(MZ.Value = MZValue) %>%
-      rename(RT.Value = RTValue) %>%
-      rename(SN.Value = SNValue)
-  }
-  return(df)
-}
-
-CheckBlankMatcher <- function(blank.matcher) {
-  # Takes a blank matcher file and separates any multi-value variable
-  # columns into their own row.
-  #
-  # Args:
-  #   blank.matcher: CSV entered by user to match samples with
-  #   appropriate blanks.
-  #
-  # Returns:
-  #   blank.matcher: new CSV with any duplicate values separated
-  #   into their own rows.
-  #
-  blank.matcher <- do.call("rbind", Map(data.frame,
-                                        Blank.Name = strsplit(as.character(blank.matcher$Blank.Name), ","),
-                                        Replicate.Name = (blank.matcher$Replicate.Name))
-  )
-  blank.matcher <- blank.matcher[c(2, 1)]
-  
-  return(blank.matcher)
-}
+# StandardizeVariables <- function(df) {
+#   if (c("ReplicateName", "AreaValue", "MZValue", "RTValue", "SNValue") %in% colnames(df))
+#   {
+#     df <- df %>%
+#       rename(Replicate.Name = ReplicateName) %>%
+#       rename(Area.Value = AreaValue) %>%
+#       rename(MZ.Value = MZValue) %>%
+#       rename(RT.Value = RTValue) %>%
+#       rename(SN.Value = SNValue)
+#   }
+#   return(df)
+# }
+# 
+# CheckBlankMatcher <- function(blank.matcher) {
+#   # Takes a blank matcher file and separates any multi-value variable
+#   # columns into their own row.
+#   #
+#   # Args:
+#   #   blank.matcher: CSV entered by user to match samples with
+#   #   appropriate blanks.
+#   #
+#   # Returns:
+#   #   blank.matcher: new CSV with any duplicate values separated
+#   #   into their own rows.
+#   #
+#   blank.matcher <- do.call("rbind", Map(data.frame,
+#                                         Blank.Name = strsplit(as.character(blank.matcher$Blank.Name), ","),
+#                                         Replicate.Name = (blank.matcher$Replicate.Name))
+#   )
+#   blank.matcher <- blank.matcher[c(2, 1)]
+#   
+#   return(blank.matcher)
+# }

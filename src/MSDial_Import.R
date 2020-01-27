@@ -1,5 +1,5 @@
 
-# Import all MSDial files --------------------------------------------------
+# Import all files --------------------------------------------------
 filenames <- RemoveCsv(list.files(path = 'data_raw', pattern = file.pattern))
 
 for (i in filenames) {

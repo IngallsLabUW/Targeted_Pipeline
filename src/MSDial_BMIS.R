@@ -27,6 +27,7 @@ Int.Stds.data <- rbind(Int.Stds.data, SampKey)
 
 # Identify internal standards without an Area, i.e. any NA values.
 IS.Issues <- Int.Stds.data[is.na(Int.Stds.data$Area.with.QC), ]
+write.csv(IS.Issues, paste("data_intermediate/MSDial_InternalStdIssues_", currentDate, ".csv", sep = ""))
 
 
 # Visualize raw areas of Internal Standards -----------------------------------------------------------------
@@ -146,7 +147,7 @@ QuickReport <- print(paste("Percent of Mass Features that picked a BMIS:",
                            "RSD minimum cutoff", cut.off2,
                            sep = " "))
 
-reportFileName = paste("data_intermediate/QuickReport", file.pattern, "_", currentDate, ".txt", sep = "")
+reportFileName = paste("data_intermediate/MSDial_QuickReport", file.pattern, "_", currentDate, ".txt", sep = "")
 cat(QuickReport, file = reportFileName)
 
 # Evaluate and visualize the results of your BMIS cutoff----------------------------------------------------------------
@@ -179,7 +180,7 @@ BMIS.normalized.data <- New.poodata %>% select(Mass.Feature, FinalBMIS, Orig_RSD
   filter(MIS == FinalBMIS)
 
 currentDate <- Sys.Date()
-csvFileName <- paste("data_processed/BMIS_Output_", Column.Type, "_", currentDate, ".csv", sep = "")
+csvFileName <- paste("data_processed/MSDial_BMIS_Output_", Column.Type, "_", currentDate, ".csv", sep = "")
 
 
 write.csv(BMIS.normalized.data, csvFileName, row.names = FALSE)

@@ -67,6 +67,7 @@ if (TRUE %in% grepl("positive|negative", names(.GlobalEnv), ignore.case = TRUE))
   RT   <- RearrangeDatasets(RT.RP.Cyano, parameter = "RT.Value")
   SN   <- RearrangeDatasets(SN.RP.Cyano, parameter = "SN.Value")
 
+  # Combine to one dataset
   combined.final <- Area %>%
     left_join(Mz) %>%
     left_join(SN) %>%
