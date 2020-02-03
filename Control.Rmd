@@ -48,10 +48,12 @@ if (length(dir(path = "data_processed/")) == 0) {
 
 
 If you would like to empty the data_processed/, data_intermediate, and figures/ subdirectories, run the following code.
-```{r, include = FALSE}
+```{r, include = TRUE}
 toClear <- c("data_processed/", "data_intermediate", "figures/")
 f <- list.files(toClear, include.dirs = F, full.names = T, recursive = T)
 file.remove(f)
+
+print("Subdirectories emptied.")
 ```
 
 ----------------------------------------------------------------------------------------------------------------------------
@@ -74,18 +76,22 @@ Outputs:
 *User action required*
 Comment or uncomment the file.pattern and matching.pattern required for your files.
 
-```{r Pattern matching, include=FALSE}
+```{r Pattern matching, include = TRUE}
 # Cyano
-file.pattern <- "CYANO"
-matching.pattern <- "RP.Cyano"
+# file.pattern <- "CYANO"
+# matching.pattern <- "RP.Cyano"
 
 # HILIC
-# file.pattern <- "HILIC"
-# matching.pattern <- "positive|negative"
+file.pattern <- "HILIC"
+matching.pattern <- "positive|negative"
+
+print(paste(file.pattern, "has been selected."))
 ```
 
-```{r MSDial Imports, include=FALSE}
+```{r MSDial Imports, include = TRUE}
 source("src/MSDial_Import.R")
+
+print("Required files imported.")
 ```
 
 
@@ -94,31 +100,35 @@ Enter the existing filenames of your run. The above code assigns the variables i
 
 Comment or uncomment the block of variable names appropriate for your run.
 
-```{r Dataset reassignment, include=FALSE}
+```{r Dataset reassignment, include = TRUE}
 # Comment out the run not being used.
 
 # Cyano variables: 
-Area.RP.Cyano <- Area_CYANO_EddyTransect
-Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
-RT.RP.Cyano   <- RT_CYANO_EddyTransect
-SN.RP.Cyano   <- SN_CYANO_EddyTransect
+# Area.RP.Cyano <- Area_CYANO_EddyTransect
+# Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
+# RT.RP.Cyano   <- RT_CYANO_EddyTransect
+# SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 # HILIC variables: 
-# Area.positive <- Area_HILICPos_Example
-# Mz.positive   <- Mz_HILICPos_Example
-# RT.positive   <- RT_HILICPos_Example
-# SN.positive   <- SN_HILICPos_Example
-# 
-# Area.negative <- Area_HILICNeg_Example
-# Mz.negative   <- Mz_HILICNeg_Example
-# RT.negative   <- RT_HILICNeg_Example
-# SN.negative   <- SN_HILICNeg_Example
+Area.positive <- Area_HILICPos_Example
+Mz.positive   <- Mz_HILICPos_Example
+RT.positive   <- RT_HILICPos_Example
+SN.positive   <- SN_HILICPos_Example
+
+Area.negative <- Area_HILICNeg_Example
+Mz.negative   <- Mz_HILICNeg_Example
+RT.negative   <- RT_HILICNeg_Example
+SN.negative   <- SN_HILICNeg_Example
+
+print(paste(file.pattern, "variables assigned."))
 
 ```
 
 Rearrange and export.
-```{r Dataset rearrangement, include=FALSE}
+```{r Dataset rearrangement, include = TRUE}
 source("src/MSDial_Rearrange.R")
+
+print("Data rearrange complete.")
 ```
 
 --------------------------------------------------------------
@@ -147,11 +157,13 @@ Outputs:
 *User action required*
 Define parameters for quality control. These act as comparison for filtering out data.
 The numbers will change depending on whether you are analyzing HILIC or Cyano data.
-```{r QC parameters, include=FALSE}
+```{r QC parameters, include = TRUE}
 area.min   <- 1000
 RT.flex    <- 0.4
 blk.thresh <- 0.3
 SN.min     <- 4
+
+print("Parameter values assigned.")
 ```
 
 Run Quality Control and export.
@@ -159,9 +171,9 @@ Run Quality Control and export.
 source("src/MSDial_QC.R")
 ```
 
-Inspect the blank.table, final.table, and RT.table values. 
+Inspect the blank.table, final.table, and RT.table values, which currently exist in the environment.
 Ensure that they look normal before proceeding to clear the environment in the next step.
-```{r, include=FALSE}
+```{r, include = TRUE}
 currentDate <- Sys.Date()
 csvFileName <- paste("data_processed/MSDial_QC_Output_", file.pattern, "_", currentDate, ".csv", sep = "")
 
@@ -173,6 +185,8 @@ invisible(lapply(tables,
                  function(x) write.csv(get(x), file=paste("data_intermediate/MSDial_", x, "_", currentDate, ".csv", sep = ""))))
 # Write final data
 write.csv(final.table, csvFileName, row.names = FALSE)
+
+print(paste(tables, "saved to data/intermediate"))
 
 rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
 ```
@@ -211,33 +225,37 @@ Enter user data for cut off parameters.
 cut.off = Decrease in RSD of pooled injections, aka improvement cutoff.
 cut.off2 = Relative squared deviation minimum.
 
-```{r BMIS cutoff values, include=FALSE}
+```{r BMIS cutoff values, include = TRUE}
 cut.off <- 0.4 
 cut.off2 <- 0.1 
+
+print("B-MIS Cutoff values assigned.")
 ```
 
 *User action required*
 Comment out appropriate variable blocks according to HILIC or Cyano data.
-```{r Cyano HILIC assignment, include=FALSE}
+```{r Cyano HILIC assignment, include = TRUE}
 # Cyano
-Column.Type = "RP"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_CYANO"
+# Column.Type = "RP"
+# standards.pattern = "Ingalls"
+# QC.pattern = "QC_Output_CYANO"
 
 # HILIC
-# Column.Type = "HILIC"
-# sample.key.pattern = "HILIC"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_HILIC"
+Column.Type = "HILIC"
+sample.key.pattern = "HILIC"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_HILIC"
 
+print(paste(file.pattern, "column type, standards pattern, and QC pattern assigned."))
 ```
 
 Import required files.
-```{r BMIS imports, include=FALSE}
+```{r BMIS imports, include=TRUE}
 source("src/MSDial_BMIS_Imports.R")
+
+print("BMIS files imported.")
 ```
 
-*User action required*
 If data is HILIC, identify duplicates and decide which to remove 
 IdentifyDuplicates function will confirm if instrument column data exists.
 User will need to use best judgement to decide which duplicate to remove.
@@ -249,12 +267,28 @@ csvFileName <- paste("data_intermediate/MSDial_HILIC.duplicates_", currentDate, 
 # Using the duplicates.testing table, decide which detected compound to keep, the positive or negative.
 
 if (exists("duplicates.testing") == TRUE) {
+  print("This is a HILIC run. Look at duplicates.testing to decide which compounds to remove.")
+} else {
+  print("Non-HILIC data: no duplicates to remove.")
+}
+
+```
+
+*User action required*
+The below section automatically removes the HILICNeg compounds from the QC'd data. 
+This is not necessarily the correct solution: the user must look at the data to ensure that they are removing the right compounds.
+```{r Remove duplicates, include = TRUE}
+if (exists("HILICS.duplicates")) {
   QCd.data <- QCd.data %>%
-    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
+    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg")) # This line requires user attention.
+  print("HILICS duplicates removed.")
+
+  Report <- print(paste(HILICS.duplicates$Metabolite.Name, "HILICNeg"))
+  cat(Report, file = "data_intermediate/MSDIAL_HILIC_DuplicateReport.txt")
   
   write.csv(duplicates.testing, csvFileName, row.names = FALSE)
 } else {
-  print("Non-HILIC data: no duplicates to remove.")
+  print("Non-HILIC data: no duplicates removed.")
 }
 
 ```
@@ -291,37 +325,42 @@ Outputs:
 
 *User action required*
 Enter dilution factor, injection volume, and the filtered volume from the instrument run.
-```{r, include=FALSE}
+```{r, include = TRUE}
 Dilution.Factor = 2
 Injection.Volume = 400 # nanomoles
 Volume.Filtered = 5 # liters
+
+print("Dilution factor, injection volume, and filtered volume assigned.")
 ```
 
 *User action required*
 Comment out appropriate variable blocks according to HILIC or Cyano data.
-```{r, include=FALSE}
+```{r, include = TRUE}
 # Cyano
-standards.pattern = "Ingalls"
-BMIS.pattern = "BMIS_Output_RP"
-QC.pattern = "QC_Output_CYANO"
-names.pattern = "Names"
-Column.Type = "RP"
+# standards.pattern = "Ingalls"
+# BMIS.pattern = "BMIS_Output_RP"
+# QC.pattern = "QC_Output_CYANO"
+# names.pattern = "Names"
+# Column.Type = "RP"
 
 # HILIC
-# standards.pattern = "Ingalls"
-# BMIS.pattern = "BMIS_Output_HILIC"
-# QC.pattern = "QC_Output_HILIC"
-# names.pattern = "Names"
-# Column.Type = "HILIC"
+standards.pattern = "Ingalls"
+BMIS.pattern = "BMIS_Output_HILIC"
+QC.pattern = "QC_Output_HILIC"
+names.pattern = "Names"
+Column.Type = "HILIC"
+
+print(paste(file.pattern, "matching patterns assigned."))
 
 ```
 
 Import required files for quantification.
-```{r Quantify imports, include=FALSE}
+```{r Quantify imports, include = TRUE}
 source("src/MSDial_Quantify_Imports.R")
+
+print("Quantification files imported.")
 ```
 
-*User action required*
 Repeat the HILIC duplicates step.
 ```{r Check duplicates, include=TRUE}
 check.duplicates <- list.files("data_intermediate", pattern = "duplicate", full.names = TRUE)
@@ -329,12 +368,26 @@ check.duplicates <- list.files("data_intermediate", pattern = "duplicate", full.
 if (length(check.duplicates) == 0) {
   print("No HILIC data exists.")
 } else {
-  print("Filtering out chosen duplicates.")
+  print("HILIC data exists.")
   
+  HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE)
+}
+```
+
+
+*User action required*
+If you are working with HILIC data, make sure your filtering step makes sense.
+```{r Check duplicates, include=TRUE}
+
+if (length(check.duplicates) == 0) {
+  print("No HILIC data exists.")
+} else {
   HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE)
   QCd.data <- QCd.data %>%
     filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
+  print("Duplicates removed.")
 }
+
 ```
 
 Check which kinds of standards have been run.
