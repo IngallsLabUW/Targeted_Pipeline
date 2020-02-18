@@ -116,7 +116,7 @@ Comment or uncomment the block of variable names appropriate for your run.
 # Comment out the run not being used.
 
 # Skyline Cyano variables:
-skyline.RP.Cyano <- `181112_CyanoAq_MESO-SCOPE_HRM`
+skyline.RP.Cyano <- X181112_CyanoAq_MESO.SCOPE_HRM
 
 # MSDial Cyano variables: 
 # Area.RP.Cyano <- Area_CYANO_EddyTransect
@@ -153,15 +153,6 @@ if (software.pattern == "MSDial") {
 rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "currentDate", "software.pattern")], lsf.str()))
 ```
 
-
-filenames <- RemoveCsv(list.files(path = "data_extras", pattern = "master", ignore.case = TRUE))
-filepath <- file.path("data_extras", paste(filenames, ".csv", sep = ""))
-master.file <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) %>%
-  rename(Second.Trace = X2nd.trace)
-
-
-# ID run types
-run.types <- IdentifyRunTypes(skyline.output)
 --------------------------------------------------------------
 
 Section II: Quality Control and flagging of problematic peaks.
@@ -174,9 +165,12 @@ Create a table of areas from blank runs for comparison.
 Flag peaks in the dataset that fall outside of user-defined bounds.
 Add parameter values to the top of the final file and save to the data_processed/ folder.
 
+Additional TQS step:
+Create standard ion ratio table for comparison.
+
 ***
 Inputs: 
-"data_intermediate/MSDial_combined_*file.pattern*_*DATE*.csv"
+"data_intermediate/*software.pattern*_combined_*file.pattern*_*DATE*.csv"
 
 Outputs: 
 "data_intermediate/MSDial_RT.table_*DATE*.csv"
@@ -187,12 +181,20 @@ Outputs:
 
 *User action required*
 Define parameters for quality control. These act as comparison for filtering out data.
-The numbers will change depending on whether you are analyzing HILIC or Cyano data.
+The numbers will change depending on whether you are analyzing HILIC vs Cyano data, or if you are measuring TQS vs QE data.
+
 ```{r QC parameters, include = TRUE}
-area.min   <- 1000
-RT.flex    <- 0.4
-blk.thresh <- 0.3
-SN.min     <- 4
+# QE + TQS QC parameters
+
+area.min   <- 1000 # HILIC - 1000, Cyano - 5000
+RT.flex    <- 0.4 # HILIC +/- 0.4 min, Cyano +/- 0.2 min 
+blk.thresh <- 0.3 # HILIC +/- 0.3, Cyano +/- 0.2
+SN.min     <- 4 # HILIC - 4, Cyano - 4
+
+# Additional QC parameters for Skyline TQS 
+area.max <- 1.0e8
+IR.flex  <- 0.3
+ppm.flex <- 7
 
 print("Parameter values assigned.")
 ```
