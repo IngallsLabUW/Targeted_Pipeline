@@ -9,7 +9,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-This markdown script controls the targeted pipeline for QE Cyano and HILIC data run through MSDial metabolomics software.
+This markdown script controls the targeted pipeline for QE and TQS Cyano and HILIC data run through MSDial metabolomics software.
 
 It contains four major sections:
 Section I: Import and cleaning/rearranging of data.
@@ -25,10 +25,13 @@ TODO (rlionheart):
 knitr::opts_chunk$set(echo = TRUE)
 
 library(anytime)
+#library(reshape2)
 library(rlist)
+#library(stringr)
 library(tidyverse)
 library(tidyr)
 options(scipen=999)
+currentDate <- Sys.Date()
 
 source("src/Functions.R")
 
@@ -57,7 +60,6 @@ print("Subdirectories emptied.")
 ```
 
 ----------------------------------------------------------------------------------------------------------------------------
-
 Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN).
 
 In the MSDial datasets:
@@ -70,30 +72,40 @@ Standardize dataset by removing "Ingalls_" prefixes from compound names, and rem
 Inputs: 
 "data_raw/*file.pattern*.csv
 Outputs: 
-"data_intermediates/MSDial_combined_*file.pattern*_*DATE*.csv"
+"data_intermediates/*software.pattern*_combined_*file.pattern*_*DATE*.csv"
 ***
 
 *User action required*
-Comment or uncomment the file.pattern and matching.pattern required for your files.
+Comment or uncomment the file.pattern, software.pattern, and matching.pattern required for your files.
+The file.pattern is the variable that will help the program pick out the correct file from the data_raw folder, and may need to be changed by the user according to the filename.
+The matching.pattern and software.pattern variables should not be changed by the user.
+
 
 ```{r Pattern matching, include = TRUE}
+# MSDial
+#software.pattern <- "MSDial"
+
+# Skyline
+software.pattern <- "Skyline"
+
 # Cyano
-# file.pattern <- "CYANO"
-# matching.pattern <- "RP.Cyano"
+file.pattern <- "CyanoAq"
+matching.pattern <- "RP.Cyano"
 
 # HILIC
-file.pattern <- "HILIC"
-matching.pattern <- "positive|negative"
+# file.pattern <- "HILIC"
+# matching.pattern <- "positive|negative"
 
-print(paste(file.pattern, "has been selected."))
+print(paste("Your software type is:", software.pattern))
+print(paste("Your run type is:", file.pattern))
 ```
 
-```{r MSDial Imports, include = TRUE}
-source("src/MSDial_Import.R")
+
+```{r Imports, include = TRUE}
+source("src/File_Import.R")
 
 print("Required files imported.")
 ```
-
 
 *User action required*
 Enter the existing filenames of your run. The above code assigns the variables in R to their filename in the directory, so if your positive Area file is "data_processed/PositiveArea.csv", it will be imported to this code as PositiveArea. Those files need to be reassigned to Area.positive so the rest of the code will know which files to edit for the pipeline steps.
@@ -103,34 +115,53 @@ Comment or uncomment the block of variable names appropriate for your run.
 ```{r Dataset reassignment, include = TRUE}
 # Comment out the run not being used.
 
-# Cyano variables: 
+# Skyline Cyano variables:
+skyline.RP.Cyano <- `181112_CyanoAq_MESO-SCOPE_HRM`
+
+# MSDial Cyano variables: 
 # Area.RP.Cyano <- Area_CYANO_EddyTransect
 # Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
 # RT.RP.Cyano   <- RT_CYANO_EddyTransect
 # SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
-# HILIC variables: 
-Area.positive <- Area_HILICPos_Example
-Mz.positive   <- Mz_HILICPos_Example
-RT.positive   <- RT_HILICPos_Example
-SN.positive   <- SN_HILICPos_Example
+# MSDial HILIC variables: 
+# Area.positive <- Area_HILICPos_Example
+# Mz.positive   <- Mz_HILICPos_Example
+# RT.positive   <- RT_HILICPos_Example
+# SN.positive   <- SN_HILICPos_Example
+# 
+# Area.negative <- Area_HILICNeg_Example
+# Mz.negative   <- Mz_HILICNeg_Example
+# RT.negative   <- RT_HILICNeg_Example
+# SN.negative   <- SN_HILICNeg_Example
 
-Area.negative <- Area_HILICNeg_Example
-Mz.negative   <- Mz_HILICNeg_Example
-RT.negative   <- RT_HILICNeg_Example
-SN.negative   <- SN_HILICNeg_Example
-
-print(paste(file.pattern, "variables assigned."))
-
+print(paste(file.pattern, software.pattern, "variables assigned."))
 ```
 
-Rearrange and export.
+Check if dataset is MSDial, rearrange if so, and export.
 ```{r Dataset rearrangement, include = TRUE}
-source("src/MSDial_Rearrange.R")
+if (software.pattern == "MSDial") {
+  source("src/MSDial_Rearrange.R")
+  print("Data rearrange complete.")
+} else {
+  csvFileName <- paste("data_intermediate/", software.pattern, "_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
+  write.csv(skyline.RP.Cyano, csvFileName, row.names = FALSE)
+  print("This is a Skyline datafile. Exporting file to data_intermediate.")
+}
 
-print("Data rearrange complete.")
+# Clear environment
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "currentDate", "software.pattern")], lsf.str()))
 ```
 
+
+filenames <- RemoveCsv(list.files(path = "data_extras", pattern = "master", ignore.case = TRUE))
+filepath <- file.path("data_extras", paste(filenames, ".csv", sep = ""))
+master.file <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) %>%
+  rename(Second.Trace = X2nd.trace)
+
+
+# ID run types
+run.types <- IdentifyRunTypes(skyline.output)
 --------------------------------------------------------------
 
 Section II: Quality Control and flagging of problematic peaks.

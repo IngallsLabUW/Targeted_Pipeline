@@ -83,5 +83,3 @@ currentDate <- Sys.Date()
 csvFileName <- paste("data_intermediate/MSDial_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
 
 write.csv(combined.final, csvFileName, row.names = FALSE)
-
-rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
