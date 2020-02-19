@@ -199,6 +199,11 @@ ppm.flex <- 7
 print("Parameter values assigned.")
 ```
 
+TQS WILL NEED AS EXPORTS: 
+Ion.ratio.table
+blank.max
+
+
 Run Quality Control and export.
 ```{r MSDial QC, include=TRUE}
 source("src/MSDial_QC.R")

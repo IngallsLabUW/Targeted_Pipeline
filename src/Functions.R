@@ -95,8 +95,11 @@ IdentifyRunTypes <- function(df) {
   #   Options conssist of samples (smp), pooled (poo), standards (std), and blanks (blk).
   #
   run.type <- tolower(str_extract(df$Replicate.Name, "(?<=_)[^_]+(?=_)"))
-  print(paste("Your runtypes are:", toString(unique(run.type))))
-  
+  if (length(skyline.runtypes != 4)) {
+    stop("This run does not contain the four standard run types!")
+  } else {
+    print(paste("Your runtypes are:", toString(unique(run.type))))
+  }
   return(run.type)
 }
 
@@ -204,7 +207,6 @@ CheckFragments <- function(skyline.file, runtype) {
   
   fragments.checked <- fragment.check %>%
     left_join(fragment.multi.unique, by = "Precursor.Ion.Name") %>%
-    #left_join(standard.types, by = "Replicate.Name") %>%
     merge(y = master.file,
           by.x = c("Precursor.Ion.Name", "Product.Mz"),
           by.y = c("Compound.Name", "Daughter"),
@@ -238,7 +240,7 @@ IdentifyRunTypes <- function(skyline.file) {
 
 
 
-CheckSmpFragments <- function(areas.transformed) {
+CheckSmpFragments <- function(skyline.file) {
   # Modifies transformed skyline output to prepare for standard ion ratio detection by running several tests.
   # 1. Isolate samples and pooled runs.
   # 2. Isolate unique Product.Mz fragments per compound.
@@ -253,14 +255,14 @@ CheckSmpFragments <- function(areas.transformed) {
   #
   # Returns:
   #   all.samples.IR: Modified data frame with added columns reflecting the above tests.
-  unique.smp.frags <- unique(all.samples %>% select(Precursor.Ion.Name, Precursor.Mz, Product.Mz))
+  unique.smp.frags <- unique(all.standards %>% select(Precursor.Ion.Name, Precursor.Mz, Product.Mz))
   
   unique.smp.frags2 <- unique.smp.frags %>%
     count(Precursor.Ion.Name) %>%
     mutate(Two.Fragments = ifelse((n==1), FALSE, TRUE)) %>%
     select(-n)
   
-  all.samples.IR <- all.samples %>%
+  all.samples.IR <- all.standards %>%
     left_join(unique.smp.frags2, by = "Precursor.Ion.Name" ) %>%
     merge(y = master.file,
           by.x = c("Precursor.Ion.Name", "Product.Mz"),
@@ -273,6 +275,7 @@ CheckSmpFragments <- function(areas.transformed) {
     mutate(Significant.Size = QT.Five.Percent < Product.Mz) %>%
     group_by(Precursor.Ion.Name) %>%
     mutate(IR.Ratio = ifelse(TRUE %in% Significant.Size, (Area[Quan.Trace == TRUE] / Area[Second.Trace == TRUE]), NA))
+  
   return(all.samples.IR)
 }
 

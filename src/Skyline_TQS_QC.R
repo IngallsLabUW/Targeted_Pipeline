@@ -10,17 +10,23 @@ filepath <- file.path("data_extras", paste(filenames, ".csv", sep = ""))
 master.file <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) %>%
   rename(Second.Trace = X2nd.trace)
 
-# ID run types
+# Sanity check for runtypes and fragments  ---------------------------------------------------------------------
+# Stop program if this run has more or fewer runtypes than the normal std, blk, poo, and smp.
 skyline.runtypes <- IdentifyRunTypes(skyline.output)
 
-
-# Ion Ratio Ranges Table  ----------------------------------------------------
-# Find Ion Ratio by dividing the area of the quantitative trace by the area of the secondary trace. 
-# Find the minimum and maximum IR to create reference table of IR ranges.
-
+# Stop program if a precursor mz has more than two daughters.
 fragments.checked <- CheckFragments(skyline.output, runtype = "Std") 
 
-Ion.Ratio.Table <- fragments.checked %>%
+if (FALSE %in% fragments.checked$Two.Fragments) {
+  stop("Some compounds have fewer than two fragments!")
+}
+
+# Create comparison tables for parameters  ---------------------------------------------------------------------
+
+# Ion Ratios
+# Find Ion Ratio by dividing the area of the quantitative trace by the area of the secondary trace. 
+# Find the minimum and maximum IR to create reference table of IR ranges.
+ion.ratio.table <- fragments.checked %>%
   group_by(Precursor.Ion.Name, Replicate.Name) %>%
   mutate(Std.Ion.Ratio = ifelse(Quan.Trace == TRUE, (Area[Quan.Trace == TRUE]) / (Area[Second.Trace == TRUE]), NA)) %>%
   group_by(Precursor.Ion.Name) %>%
@@ -30,79 +36,78 @@ Ion.Ratio.Table <- fragments.checked %>%
   unique()
 
 
-# Retention Time Table ----------------------------------------------------
+# Retention Times 
 # Find the minimum and maximum Retention Times and take the average.
 # Use this as a reference table for acceptable Retention Times.
-RT.Range.Table <- skyline.output %>%
-  select(Replicate.Name, Precursor.Ion.Name, Retention.Time) %>%
-  filter(str_detect(Replicate.Name, "Std")) %>%
+RT.table <- skyline.output %>%
+  filter(str_detect(Replicate.Name, regex("Std", ignore_case = TRUE))) %>%
   group_by(Precursor.Ion.Name) %>%
   mutate(RT.min = min(Retention.Time, na.rm = TRUE)) %>%
   mutate(RT.max = max(Retention.Time, na.rm = TRUE)) %>%
   mutate(RT.Reference = mean(Retention.Time, na.rm = TRUE)) %>%
-  select(-c(Retention.Time, Replicate.Name)) %>%
+  select(Precursor.Ion.Name, RT.min, RT.max) %>%
   unique()
 
-# Blanks ---------------------------------------
-# Isolate the blanks in the sample and add a column 
-# with maximum blank for each Precursor ion name.
-Blank.Table <- skyline.output %>%
+
+# Blank Table
+# Isolate the blanks in the sample and add a column with maximum blank for each Precursor ion name.
+blank.table <- skyline.output %>%
   merge(y = master.file,
         by.x = c("Precursor.Ion.Name", "Product.Mz"),
         by.y = c("Compound.Name", "Daughter"),
         all.x = TRUE) %>%
-  mutate(Second.Trace = ifelse(Second.Trace == "", FALSE, TRUE)) %>%
-  mutate(Quan.Trace = ifelse(Quan.Trace == "no", FALSE, TRUE)) %>%
-  filter(str_detect(Replicate.Name, "Blk")) %>%
-  filter(Quan.Trace == TRUE) %>%
-  select(Precursor.Ion.Name, Replicate.Name, Area) %>%
+  mutate(Second.Trace = ifelse(Second.Trace == "", FALSE, TRUE),
+         Quan.Trace = ifelse(Quan.Trace == "no", FALSE, TRUE)) %>%
+  filter(str_detect(Replicate.Name, "Blk"),
+         Quan.Trace == TRUE) %>%
   group_by(Precursor.Ion.Name) %>%
   mutate(Blank.max = max(Area, na.rm = TRUE)) %>%
-  select(-c(Area, Replicate.Name)) %>%
+  select(Precursor.Ion.Name, Blank.max) %>%
   unique()
 
-# Height  ---------------------------------------
-# Isolate all pooled and sample Heights
-Height.Table <- skyline.output %>%
-  select(Replicate.Name, Precursor.Ion.Name, Precursor.Mz, Product.Mz, Height) %>%
-  filter(str_detect(Replicate.Name, "Smp|Poo")) 
+# # Height
+# # Isolate all pooled and sample Heights
+# height.table <- skyline.output %>%
+#   select(Replicate.Name, Precursor.Ion.Name, Precursor.Mz, Product.Mz, Height) %>%
+#   filter(str_detect(Replicate.Name, "Smp|Poo")) 
 
-# Area  ---------------------------------------
+# Area  
 # Isolate all pooled and sample Areas.
-Area.Table <- skyline.output %>%
-  select(Replicate.Name, Precursor.Ion.Name, Area) %>%
-  filter(str_detect(Replicate.Name, "Smp|Poo"))  
+# area.table <- skyline.output %>%
+#   select(Replicate.Name, Precursor.Ion.Name, Area) %>%
+#   filter(str_detect(Replicate.Name, "Smp|Poo"))  
 
 
-# Signal to Noise  ---------------------------------------
+# Signal to Noise 
 # Isolate all pooled and sample runs. Find the Signal to Noise
 # by dividing the Background of each run by its Area.
-SN.Table <- skyline.output %>%
-  merge(y = master.file,
-        by.x = c("Precursor.Ion.Name", "Product.Mz"),
-        by.y = c("Compound.Name", "Daughter"),
-        all.x = TRUE) %>%
-  mutate(Second.Trace = ifelse(Second.Trace == "", FALSE, TRUE)) %>%
-  mutate(Quan.Trace = ifelse(Quan.Trace == "no", FALSE, TRUE)) %>%
-  filter(str_detect(Replicate.Name, "Smp|Poo")) %>%
-  filter(Quan.Trace == TRUE) %>%
-  select(Replicate.Name, Precursor.Ion.Name, Area, Background) %>%
-  mutate(Signal.to.Noise = (Area / Background)) 
+# SN.table <- skyline.output %>%
+#   merge(y = master.file,
+#         by.x = c("Precursor.Ion.Name", "Product.Mz"),
+#         by.y = c("Compound.Name", "Daughter"),
+#         all.x = TRUE) %>%
+#   mutate(Second.Trace = ifelse(Second.Trace == "", FALSE, TRUE)) %>%
+#   mutate(Quan.Trace = ifelse(Quan.Trace == "no", FALSE, TRUE)) %>%
+#   filter(str_detect(Replicate.Name, "Smp|Poo")) %>%
+#   filter(Quan.Trace == TRUE) %>%
+#   select(Replicate.Name, Precursor.Ion.Name, Area, Background) %>%
+#   mutate(Signal.to.Noise = (Area / Background)) 
 
+# Construct   ---------------------------------------
 # Construct final output of sample and pooled runs.
-all.samples <- CheckFragments(skyline.output, runtype = "Smp|Poo") 
+all.standards <- CheckStdFragments(skyline.output) 
 
-all.samples.data <- all.samples %>%
+all.samples <- CheckSmpFragments(skyline.output)
+
+all.samples <- all.standards %>%
   left_join(skyline.output %>% filter(str_detect(Replicate.Name, "Smp|Poo")))
-
-
 
 # Ion Ratio Flags  ---------------------------------------
 # If the Ion Ratio falls outside of the IR.Table range +/- the
 # IR.flex value, add a flag.
-IR.flags.added <- all.samples.data %>%
+IR.flags.added <- all.samples %>%
   mutate(IR.Ratio = ifelse(TRUE %in% Significant.Size, (Area[Quan.Trace == TRUE] / Area[Second.Trace == TRUE]), NA)) %>%
-  left_join(Ion.Ratio.Table, by = "Precursor.Ion.Name") %>%
+  left_join(ion.ratio.table, by = "Precursor.Ion.Name") %>%
   mutate(IR.Flag = ifelse((IR.Ratio < (IR.min - IR.flex) & IR.Ratio > (IR.max + IR.flex)), "IR.Flag", NA)) %>%
   select(Replicate.Name:Second.Trace, Protein.Name:Background, Height, IR.Flag)
 
