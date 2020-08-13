@@ -1,19 +1,6 @@
 ## Function definitions ##
-ChangeClasses <- function(df, start.column, end.column) {
-  # Change specified columns from factors to numeric.
-  #
-  # Args
-  #   df: MSDial dataframe containing sample columns.
-  #
-  # Returns
-  #   df: MSDial dataframe, with specified columns changed to a numeric class. 
-  for (i in c(start.column:end.column)) {
-    df[, i] <- as.numeric(as.character(df[, i]))
-  }
-  return(df)
-}
 
-ChangeXClasses <- function(df) {
+ChangeClasses <- function(df) {
   # Identifies columns starting with X and changes their class to numeric.
   #
   # Args
@@ -207,14 +194,14 @@ CheckFragments <- function(skyline.file, runtype) {
   # Returns:
   #   fragments.checked: Modified data frame with added columns reflecting the above tests.
   #
-  fragment.check <- skyline.file %>%
+  fragment.check <- skyline.output %>%
     filter(str_detect(Replicate.Name, runtype)) %>%
     select(Replicate.Name, Precursor.Ion.Name, Area, Precursor.Mz, Product.Mz)
   
   fragment.unique <-unique(fragment.check %>% select(Precursor.Ion.Name, Precursor.Mz, Product.Mz))
   
   fragment.multi.unique <- fragment.unique %>%
-    dplyr::count(Precursor.Ion.Name) %>%
+    count(Precursor.Ion.Name) %>%
     mutate(Two.Fragments = ifelse((n==1), FALSE, TRUE)) %>%
     select(-n)
   
@@ -294,29 +281,37 @@ CheckSmpFragments <- function(skyline.file) {
 
 
 # Unused functions --------------------------------------------------------
-# JoinStandardsBlanks <- function(df, machine, runtype) {
-#   if (machine == "TQS") {
-#     df.joined <- df %>%
-#       filter(str_detect(Replicate.Name, runtype)) %>%
-#       merge(y = master.file,
-#             by.x = c("Precursor.Ion.Name", "Product.Mz"),
-#             by.y = c("Compound.Name", "Daughter"),
-#             all.x = TRUE) %>%
-#       mutate(Second.Trace = ifelse(Second.Trace == "", FALSE, TRUE)) %>%
-#       mutate(Quan.Trace = ifelse(Quan.Trace == "no", FALSE, TRUE)) %>%
-#       filter(Quan.Trace == TRUE) %>%
-#       select(c(Replicate.Name, Precursor.Ion.Name, Precursor.Mz, Product.Mz, Area,
-#                Retention.Time.x, Background, Height))%>%
-#       dplyr::rename(Retention.Time = Retention.Time.x)
-#   final.table <- bind_rows(final.table, df.joined)
-#   } else if (machine == "QE") {
-#     df.joined <- df %>%
-#       filter(str_detect(Replicate.Name, runtype)) %>%
-#       select(c(Replicate.Name, Precursor.Ion.Name, Area,
-#                Retention.Time, Background, Height)) 
-#     final.table <- bind_rows(final.table, df.joined)
-#   }
-# 
-# return(final.table)
-# }
 
+# StandardizeVariables <- function(df) {
+#   if (c("ReplicateName", "AreaValue", "MZValue", "RTValue", "SNValue") %in% colnames(df))
+#   {
+#     df <- df %>%
+#       rename(Replicate.Name = ReplicateName) %>%
+#       rename(Area.Value = AreaValue) %>%
+#       rename(MZ.Value = MZValue) %>%
+#       rename(RT.Value = RTValue) %>%
+#       rename(SN.Value = SNValue)
+#   }
+#   return(df)
+# }
+# 
+# CheckBlankMatcher <- function(blank.matcher) {
+#   # Takes a blank matcher file and separates any multi-value variable
+#   # columns into their own row.
+#   #
+#   # Args:
+#   #   blank.matcher: CSV entered by user to match samples with
+#   #   appropriate blanks.
+#   #
+#   # Returns:
+#   #   blank.matcher: new CSV with any duplicate values separated
+#   #   into their own rows.
+#   #
+#   blank.matcher <- do.call("rbind", Map(data.frame,
+#                                         Blank.Name = strsplit(as.character(blank.matcher$Blank.Name), ","),
+#                                         Replicate.Name = (blank.matcher$Replicate.Name))
+#   )
+#   blank.matcher <- blank.matcher[c(2, 1)]
+# 
+#   return(blank.matcher)
+# }
