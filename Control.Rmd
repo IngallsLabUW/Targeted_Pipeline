@@ -188,9 +188,11 @@ Inputs:
 "data_intermediate/*software.pattern*_combined_*file.pattern*_*DATE*.csv"
 
 Outputs: 
-"data_intermediate/*instrument.pattern*_RT.table_*DATE*.csv"
-"data_intermediate/*instrument.pattern*_final.table_*DATE*.csv"
-"data_intermediate/*instrument.pattern*_blank.table_*DATE*.csv"
+"data_intermediate/*software.pattern*_*instrument.pattern*_RT.table_*DATE*.csv"
+"data_intermediate/*software.pattern*_*instrument.pattern*_SN.table_*DATE*.csv"
+"data_intermediate/*software.pattern*_*instrument.pattern*_area.table_*DATE*.csv"
+"data_intermediate/*software.pattern*_*instrument.pattern*_final.table_*DATE*.csv"
+"data_intermediate/*software.pattern*_*instrument.pattern*_blank.table_*DATE*.csv"
 "data_processed/*instrument.pattern*_QC_Output_*file.pattern*_*DATE*.csv"
 Additional TQS Output:
 "data_processed/*instrument.pattern*_IR.table_*DATE*.csv"
@@ -247,7 +249,8 @@ tablelist <- do.call("list", mget(tables))
 # Write intermediate data
 invisible(lapply(tables, 
                  function(x) write.csv(get(x), file=paste("data_intermediate/",
-                                                            software.pattern,
+                                                            software.pattern, "_",
+                                                          instrument.pattern,
                                                             "_", x, "_", currentDate,
                                                           ".csv", sep = ""))))
 # Write final data
@@ -276,13 +279,15 @@ Decide whether to accept a B-MIS or not, according to user-defined values.
 ***
 Inputs:
 "data_extras/*Sample_Key_from_instrument*.csv"
-"data_extras/Ingalls_Lab_Standards.csv"
-"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
+"data_processed/*software.pattern*_*instrument.pattern*_QC_Output_*file.pattern*_*DATE*.csv"
+Most recent Ingalls Lab Standards from GitHub:
+https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv
+
 
 Outputs:
 "figures/IS.Raw.Areas.png"
 "figures/BMIS_Evalution.png"
-"data_intermediate/MSDial_InternalStdIssues_*DATE*.csv"
+"data_intermediate/*instrument.pattern*_InternalStdIssues_*DATE*.csv"
 "data_intermediate/MSDial_QuickReport_*file.pattern*_*DATE*.txt"
 "data_processed/MSDial_BMIS_Output_*file.pattern*_*DATE*.csv"
 ***
@@ -303,10 +308,10 @@ print("B-MIS Cutoff values assigned.")
 Comment out appropriate variable blocks according to HILIC or Cyano data.
 ```{r Cyano HILIC assignment, include = TRUE}
 
-#MSDial
+# MSDial
 # software.pattern <- "MSDial"
 
-#Skyline
+# Skyline
 software.pattern <- "Skyline"
 
 # Cyano Skyline
@@ -341,7 +346,8 @@ User will need to use best judgement to decide which duplicate to remove.
 ```{r Check duplicates, include=TRUE}
 source("src/Check_Duplicates.R")
 currentDate = Sys.Date()
-csvFileName <- paste("data_intermediate/MSDial_HILIC.duplicates_", currentDate, ".csv", sep = "")
+csvFileName <- paste("data_intermediate/", software.pattern, 
+                     "_HILIC.duplicates_", currentDate, ".csv", sep = "")
 
 # Using the duplicates.testing table, decide which detected compound to keep, the positive or negative.
 
@@ -379,7 +385,7 @@ QCd.data <- QCd.data %>% rename(Metabolite.Name = Precursor.Ion.Name)
 
 Run BMIS.
 ```{r BMIS, include=TRUE}
-source("src/MSDial_BMIS.R")
+source("src/BMIS.R")
 ```
 
 --------------------------------------------------------------
