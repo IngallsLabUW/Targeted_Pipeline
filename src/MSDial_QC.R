@@ -4,7 +4,8 @@
 filename <- RemoveCsv(list.files(path = 'data_intermediate/', pattern = file.pattern))
 filepath <- file.path('data_intermediate', paste(filename, ".csv", sep = ""))
 
-combined <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
+combined <- assign(make.names(filename), 
+                   read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
   select(Replicate.Name:Alignment.ID, Metabolite.Name) %>%
   mutate(Run.Type = (tolower(str_extract(Replicate.Name, "(?<=_)[^_]+(?=_)")))) 
 
@@ -42,7 +43,8 @@ SN.Area.Flags <- combined %>%
 # Create retention time flags ---------------------------------------
 add.RT.Flag <- SN.Area.Flags %>%
   left_join(RT.table %>% select(-Run.Type)) %>%
-  mutate(RT.Flag = ifelse((RT.Value >= (RT.max + RT.flex) | RT.Value <= (RT.min - RT.flex)), "RT.Flag", NA)) %>%
+  mutate(RT.Flag = ifelse((RT.Value >= (RT.max + RT.flex) | RT.Value <= (RT.min - RT.flex)), 
+                          "RT.Flag", NA)) %>%
   select(-c("RT.max", "RT.min", "RT.diff"))
 
 # Create blank flags ---------------------------------------
@@ -73,4 +75,8 @@ Value <- as.character(c(NA, NA, area.min, RT.flex, blk.thresh, SN.min))
 df <- data.frame(Description, Value)
 final.table <- bind_rows(df, final.table)
 
-rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "final.table", "RT.table", "blank.table")], lsf.str()))
+rm(list = setdiff(ls()[!ls() %in% c("file.pattern", "instrument.pattern",
+                                    "software.pattern", "final.table", 
+                                    "RT.table", "blank.table")], lsf.str()))
+
+

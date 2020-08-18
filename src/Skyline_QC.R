@@ -6,11 +6,12 @@ filenames <- RemoveCsv(list.files(path = "data_intermediate", pattern = file.pat
 filepath <- file.path("data_intermediate", paste(filenames, ".csv", sep = ""))
 skyline.output <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) 
 
-filenames <- RemoveCsv(list.files(path = "data_extras", pattern = "master", ignore.case = TRUE))
-filepath <- file.path("data_extras", paste(filenames, ".csv", sep = ""))
-master.file <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) %>%
-  dplyr::rename(Second.Trace = X2nd.trace)
-
+if (instrument.pattern == "TQS") {
+  filenames <- RemoveCsv(list.files(path = "data_extras", pattern = "master", ignore.case = TRUE))
+  filepath <- file.path("data_extras", paste(filenames, ".csv", sep = ""))
+  master.file <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) %>%
+    dplyr::rename(Second.Trace = X2nd.trace)
+}
 
 # Sanity check for runtypes  ---------------------------------------------------------------------
 # Stop program if this run has more or fewer runtypes than the normal std, blk, poo, and smp.
@@ -247,17 +248,32 @@ if (instrument.pattern == "TQS") {
 # "TQSQC_<original file name>.csv
 
 # Print to file with comments and a new name ------------------------------
-Description <- c(as.character(anydate(Sys.Date())),
-                 "Hello! Welcome to the world of Skyline TQS Quality Control! ",
-                 "Maximum height for a real peak: ",
-                 "Minimum height for a real peak: ",
-                 "Maximum area for a real peak: ",
-                 "RT flexibility: ",
-                 "Blank can be this fraction of a sample: ",
-                 "S/N ratio: " ,
-                 "Ion ratio flexibility", 
-                 "Processed on: ")
-Value <- c(NA, NA, height.max, height.min, area.min, RT.flex, blk.thresh, SN.min, IR.flex, Sys.time())
+if (instrument.pattern == "TQS") {
+  Description <- c(as.character(anydate(Sys.Date())),
+                   "Hello! Welcome to the world of Skyline TQS Quality Control! ",
+                   "Maximum height for a real peak: ",
+                   "Minimum height for a real peak: ",
+                   "Maximum area for a real peak: ",
+                   "RT flexibility: ",
+                   "Blank can be this fraction of a sample: ",
+                   "S/N ratio: " ,
+                   "Ion ratio flexibility", 
+                   "Processed on: ")
+  
+  Value <- c(NA, NA, height.max, height.min, area.min, RT.flex, blk.thresh, SN.min, IR.flex, Sys.time())
+} else{
+  Description <- c(as.character(anydate(Sys.Date())),
+                   "Hello! Welcome to the world of Skyline QE Quality Control! ",
+                   "Maximum height for a real peak: ",
+                   "Minimum height for a real peak: ",
+                   "Maximum area for a real peak: ",
+                   "RT flexibility: ",
+                   "Blank can be this fraction of a sample: ",
+                   "S/N ratio: " ,
+                   "Processed on: ")
+  Value <- c(NA, NA, height.max, height.min, area.min, RT.flex, blk.thresh, SN.min, Sys.time())
+  
+}
 
 df <- data.frame(Description, Value)
 final.table <- bind_rows(df, final.table)

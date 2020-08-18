@@ -209,15 +209,15 @@ area.min   <- 5000 # HILIC - 1000, Cyano - 5000
 RT.flex    <- 0.2 # HILIC +/- 0.4 min, Cyano +/- 0.2 min 
 blk.thresh <- 0.2 # HILIC +/- 0.3, Cyano +/- 0.2
 SN.min     <- 4 # HILIC - 4, Cyano - 4
+height.min <- 1000
+height.max <- 1.0e8
+
 
 # Additional QC parameters for Skyline TQS 
 # Comment this out when using MSDial
-area.max <- 1.0e8
-IR.flex  <- 0.3
-ppm.flex <- 7
-height.max <- 1.0e8
-height.min <- 1000
-SN.min     <- 4
+# area.max <- 1.0e8
+# IR.flex  <- 0.3
+# ppm.flex <- 7
 
 print("Parameter values assigned.")
 ```
@@ -309,20 +309,20 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 ```{r Cyano HILIC assignment, include = TRUE}
 
 # MSDial
-# software.pattern <- "MSDial"
+software.pattern <- "MSDial"
 
 # Skyline
-software.pattern <- "Skyline"
+# software.pattern <- "Skyline"
 
 # Cyano Skyline
-Column.Type = "RP"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_CyanoAq"
-
-# Cyano MSDial
 # Column.Type = "RP"
 # standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_CYANO"
+# QC.pattern = "QC_Output_CyanoAq"
+
+# Cyano MSDial
+Column.Type = "RP"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_CYANO"
 
 # HILIC
 # Column.Type = "HILIC"
@@ -380,7 +380,7 @@ if (exists("duplicates.testing")) {
 
 Mini check for Metabolite.Name vs Precursor.Ion.Name.
 ```{r Compound Name check, include = TRUE}
-QCd.data <- QCd.data %>% rename(Metabolite.Name = Precursor.Ion.Name)
+#QCd.data <- QCd.data %>% rename(Metabolite.Name = Precursor.Ion.Name)
 ```
 
 Run BMIS.

@@ -19,7 +19,7 @@ for (df in seq_along(headers.set)) {
 }
 
 # Change variable classes ---------------------------------------------------------------------
-classes.changed <- lapply(names(headers.set), function(x) ChangeClasses(headers.set[[x]]))
+classes.changed <- lapply(names(headers.set), function(x) ChangeXClasses(headers.set[[x]]))
 names(classes.changed) <- runs
 
 list2env(classes.changed, globalenv())
@@ -56,7 +56,7 @@ if (TRUE %in% grepl("positive|negative", names(.GlobalEnv), ignore.case = TRUE))
     mutate(Column = "HILICNeg") %>%
     select(Replicate.Name, Column, Area.Value, Mz.Value, RT.Value, SN.Value, everything())
 
-  combined.final <- combined.neg %>%
+  combined.semifinal <- combined.neg %>%
     bind_rows(combined.pos)
 
   } else {
@@ -68,7 +68,7 @@ if (TRUE %in% grepl("positive|negative", names(.GlobalEnv), ignore.case = TRUE))
   SN   <- RearrangeDatasets(SN.RP.Cyano, parameter = "SN.Value")
 
   # Combine to one dataset
-  combined.final <- Area %>%
+  combined.semifinal <- Area %>%
     left_join(Mz) %>%
     left_join(SN) %>%
     left_join(RT) %>%
@@ -77,8 +77,24 @@ if (TRUE %in% grepl("positive|negative", names(.GlobalEnv), ignore.case = TRUE))
 
 
 # Standardize dataset --------------------------------------------------
-combined.final <- StandardizeMetabolites(combined.final)
+combined.semifinal2 <- StandardizeMetabolites(combined.semifinal)
+###
+Ingalls.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv",
+                                                             stringsAsFactors = FALSE, header = TRUE)
+update.names <- combined.semifinal2 %>%
+  select(Metabolite.Name) %>%
+  rename(Compound.Name_old = Metabolite.Name) %>%
+  left_join(Ingalls.Standards %>% select(Compound.Name, Compound.Name_old)) %>%
+  rename(Compound.Name_new = Compound.Name,
+         Metabolite.Name = Compound.Name_old)
 
+combined.final <- combined.semifinal2 %>%
+  left_join(update.names) %>%
+  select(-Metabolite.Name) %>%
+  rename(Metabolite.Name = Compound.Name_new) %>%
+  unique()
+
+###
 currentDate <- Sys.Date()
 csvFileName <- paste("data_intermediate/MSDial_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
 
