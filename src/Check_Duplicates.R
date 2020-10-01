@@ -16,4 +16,3 @@ if ("Column" %in% colnames(QCd.data)) {
 } else {
   print("Non-HILIC data: no duplicates to detect.")
 }
-

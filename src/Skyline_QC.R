@@ -1,4 +1,4 @@
-# Skyline TQS Quality Control
+# Skyline TQS + QE Quality Control
 
 
 # Import datafiles and accompanying master files --------------------------------------------------------------
@@ -18,7 +18,6 @@ if (instrument.pattern == "TQS") {
 skyline.runtypes <- IdentifyRunTypes(skyline.output)
 
 # Depending on instrument.pattern, create comparison tables --------------------------------------
-
 
 if (instrument.pattern == "TQS") {
   # Check for fragments in TQS data.
@@ -117,7 +116,6 @@ area.table <- skyline.output %>%
   select(Replicate.Name, Precursor.Ion.Name, Area) %>%
   filter(str_detect(Replicate.Name, regex("Smp|Poo", ignore_case = TRUE)))
 
-
 # Signal to Noise 
 # Isolate all pooled and sample runs. Find the Signal to Noise
 # by dividing the Background of each run by its Area.
@@ -168,6 +166,9 @@ Blank.flags.added <- RT.flags.added %>%
   left_join(blank.table) %>%
   group_by(Precursor.Ion.Name) %>%
   mutate(Blank.Reference = Area / Blank.max) %>%
+  ########################333
+  mutate(Protein.Name = ifelse(str_detect(Replicate.Name, ","), "Internal Std", "Non IS")) %>%
+  ##############################
   mutate(blank.Flag = ifelse(((Protein.Name != "Internal Std") & ((Area / Blank.max) < blk.thresh)), 
                              "blank.Flag", 
                              ifelse(((Protein.Name == "Internal Std") & ((Area / Blank.max) < blk.thresh)),
@@ -189,7 +190,6 @@ Area.flags.added <- Height.flags.added %>%
   mutate(area.min.Flag = ifelse((Area < area.min), "area.min.Flag", NA)) %>%
   mutate(Area.with.QC   = ifelse(is.na(area.min.Flag), Area, NA)) %>%
   select(Replicate.Name:Area, Area.with.QC, everything())
-
 
 # Signal to Noise Flags  ---------------------------------------
 # If the Signal to Noise ratio is less than the SN.min, add a flag.

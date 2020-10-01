@@ -1,3 +1,4 @@
+# Ignore the following files
 .Rproj.user
 .Rhistory
 .RData
@@ -7,4 +8,8 @@
 *.csv
 *.png
 *.txt
+
+# But don't ignore these files: 
+!*/data_extras/*SampleKey*.csv
+
 

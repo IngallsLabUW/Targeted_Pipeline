@@ -19,6 +19,10 @@ Section II: Quality control using user-defined parameters.
 Section III: Applying Best-Matched Internal Standard (B-MIS).
 Section IV: Quantifying peak area to umol/vial when possible.
 
+In order to run this script, you will need the following items:
+1. The instrument output in csv format from either MSDial or Skyline.
+2. A sample key from the run, which should include information such as the Column, the Bio Normalization,
+the Volume Filtered, and the Dilution Factor. An example of this is included in the data_extras/ subdirectory.
 
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -104,7 +108,7 @@ file.pattern <- "Vitamins"
 
 # Cyano 
 matching.pattern <- "RP.Cyano"
-# matching.pattern <- "positive|negative"
+# matching.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
@@ -132,6 +136,10 @@ Comment or uncomment the block of variable names appropriate for your run.
 # Skyline Cyano variables:
 skyline.RP.Cyano <- B12_Incubations_Vitamins_August2020
 
+# Skyline HILIC variables: 
+# skyline.HILIC.neg <- X181116_HILIC_neg_MESO.SCOPE_HRM
+# skyline.HILIC.pos <- X181116_HILIC_pos_MESO.SCOPE_HRM
+
 # MSDial Cyano variables: 
 # Area.RP.Cyano <- Area_CYANO_EddyTransect
 # Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
@@ -149,7 +157,7 @@ skyline.RP.Cyano <- B12_Incubations_Vitamins_August2020
 # RT.negative   <- RT_HILICNeg_Example
 # SN.negative   <- SN_HILICNeg_Example
 
-print(paste(file.pattern, software.pattern, "variables assigned."))
+print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
 
 Check if dataset is MSDial, rearrange if so, and export.
@@ -159,8 +167,6 @@ if (software.pattern == "MSDial") {
   print("Data rearrange complete.")
 } else {
   source("src/Skyline_Rearrange.R")
-  csvFileName <- paste("data_intermediate/", software.pattern, "_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
-  write.csv(skyline.RP.Cyano, csvFileName, row.names = FALSE)
   print("This is a Skyline datafile. Exporting file to data_intermediate.")
 }
 
@@ -215,9 +221,9 @@ height.max <- 1.0e8
 
 # Additional QC parameters for Skyline TQS 
 # Comment this out when using MSDial
-# area.max <- 1.0e8
-# IR.flex  <- 0.3
-# ppm.flex <- 7
+area.max <- 1.0e8
+IR.flex  <- 0.3
+ppm.flex <- 7
 
 print("Parameter values assigned.")
 ```
@@ -309,10 +315,10 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 ```{r Cyano HILIC assignment, include = TRUE}
 
 # MSDial
-software.pattern <- "MSDial"
+# software.pattern <- "MSDial"
 
 # Skyline
-# software.pattern <- "Skyline"
+software.pattern <- "Skyline"
 
 # Cyano Skyline
 # Column.Type = "RP"
@@ -324,7 +330,12 @@ Column.Type = "RP"
 standards.pattern = "Ingalls"
 QC.pattern = "QC_Output_CYANO"
 
-# HILIC
+# HILIC Skyline
+Column.Type = "HILIC"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_HILIC"
+
+# HILIC MSDial
 # Column.Type = "HILIC"
 # sample.key.pattern = "HILIC"
 # standards.pattern = "Ingalls"
