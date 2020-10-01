@@ -37,16 +37,19 @@ currentDate <- Sys.Date()
 source("src/Functions.R")
 
 processed.folder <- "data_processed" 
-figures.folder <- "figures"
 intermediate.folder <- "data_intermediate"
+extras.folder <- "data_extras"
+figures.folder <- "figures"
+
 dir.create(file.path(".", processed.folder))  
-dir.create(file.path(".", figures.folder))  
 dir.create(file.path(".", intermediate.folder))  
+dir.create(file.path(".", extras.folder))
+dir.create(file.path(".", figures.folder))  
 
 if (length(dir(path = "data_processed/")) == 0) {
   cat("\nData_processed subdirectory has been created and is ready for new data.")
 } else {
-  cat("Warning: data_processed subdirectory is not empty. Empty contents before continuing.\n")
+  cat("Warning: some or all of the subdirectories are not empty. Empty contents before continuing.\n")
 }
 ```
 

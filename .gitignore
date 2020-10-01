@@ -10,6 +10,6 @@
 *.txt
 
 # But don't ignore these files: 
-!*/data_extras/*SampleKey*.csv
+!*/data_extras/
 
 
