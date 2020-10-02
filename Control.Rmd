@@ -39,11 +39,13 @@ source("src/Functions.R")
 processed.folder <- "data_processed" 
 intermediate.folder <- "data_intermediate"
 extras.folder <- "data_extras"
+raw.foler <- "data_raw"
 figures.folder <- "figures"
 
 dir.create(file.path(".", processed.folder))  
 dir.create(file.path(".", intermediate.folder))  
 dir.create(file.path(".", extras.folder))
+dir.create(file.path(".", raw.folder))
 dir.create(file.path(".", figures.folder))  
 
 if (length(dir(path = "data_processed/")) == 0) {
