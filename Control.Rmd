@@ -42,7 +42,7 @@ source("src/Functions.R")
 processed.folder <- "data_processed" 
 intermediate.folder <- "data_intermediate"
 extras.folder <- "data_extras"
-raw.foler <- "data_raw"
+raw.folder <- "data_raw"
 figures.folder <- "figures"
 
 dir.create(file.path(".", processed.folder))  
