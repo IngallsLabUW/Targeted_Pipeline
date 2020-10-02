@@ -24,6 +24,9 @@ In order to run this script, you will need the following items:
 2. A sample key from the run, which should include information such as the Column, the Bio Normalization,
 the Volume Filtered, and the Dilution Factor. An example of this is included in the data_extras/ subdirectory.
 
+*Remember to change the "title" at the top of the page to your project. Below, add a short description of your project*
+This is a template for the Ingalls Targeted Pipeline and encompasses several projects for the code development.
+
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 
