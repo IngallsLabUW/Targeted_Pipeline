@@ -291,32 +291,3 @@ CheckSmpFragments <- function(skyline.file) {
   
   return(all.samples.IR)
 }
-
-
-# Unused functions --------------------------------------------------------
-# JoinStandardsBlanks <- function(df, machine, runtype) {
-#   if (machine == "TQS") {
-#     df.joined <- df %>%
-#       filter(str_detect(Replicate.Name, runtype)) %>%
-#       merge(y = master.file,
-#             by.x = c("Precursor.Ion.Name", "Product.Mz"),
-#             by.y = c("Compound.Name", "Daughter"),
-#             all.x = TRUE) %>%
-#       mutate(Second.Trace = ifelse(Second.Trace == "", FALSE, TRUE)) %>%
-#       mutate(Quan.Trace = ifelse(Quan.Trace == "no", FALSE, TRUE)) %>%
-#       filter(Quan.Trace == TRUE) %>%
-#       select(c(Replicate.Name, Precursor.Ion.Name, Precursor.Mz, Product.Mz, Area,
-#                Retention.Time.x, Background, Height))%>%
-#       dplyr::rename(Retention.Time = Retention.Time.x)
-#   final.table <- bind_rows(final.table, df.joined)
-#   } else if (machine == "QE") {
-#     df.joined <- df %>%
-#       filter(str_detect(Replicate.Name, runtype)) %>%
-#       select(c(Replicate.Name, Precursor.Ion.Name, Area,
-#                Retention.Time, Background, Height)) 
-#     final.table <- bind_rows(final.table, df.joined)
-#   }
-# 
-# return(final.table)
-# }
-

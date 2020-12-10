@@ -28,7 +28,6 @@ Int.Stds.data <- rbind(Int.Stds.data, SampKey)
 IS.Issues <- Int.Stds.data[is.na(Int.Stds.data$Area.with.QC), ]
 write.csv(IS.Issues, paste("data_intermediate/MSDial_InternalStdIssues_", currentDate, ".csv", sep = ""))
 
-
 # Visualize raw areas of Internal Standards -------------------------------------------------------------
 IS.Raw.Area.Plot <- ggplot(Int.Stds.data, aes(x = Replicate.Name, y = Area.with.QC)) +
   geom_bar(stat = "identity") +

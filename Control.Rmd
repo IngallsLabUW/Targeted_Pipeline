@@ -69,13 +69,14 @@ print("Subdirectories emptied.")
 ```
 
 ----------------------------------------------------------------------------------------------------------------------------
-Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN). Or, import your single Skyline file in long format.
+Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN). 
+Or, import your single Skyline file in long format.
 
-For MSDial data:
+Steps for MSDial data:
 Set header, filter unknowns.
 Change variable classes from character/factor to numeric, according to column.
 Rearrange the dataframes and combine to a single frame in long format.
-Standardize dataset by removing "Ingalls_" prefixes from compound names, and removing the syntactically correct "X" from Replicates.
+Standardize dataset by removing "Ingalls_" prefixes from compound names, and removing the syntactically correct "X" from the Replicates column.
 
 For Skyline data:
 Ensure all columns are the appropriate class (numeric, character, etc.)
@@ -89,17 +90,17 @@ Outputs:
 
 *User action required*
 Comment or uncomment the file.pattern, software.pattern, instrument.pattern, and matching.pattern required for your files.
-The file.pattern is the variable that will help the program pick out the correct file from the data_raw folder, and may need to be changed by the user according to the filename. 
+The file.pattern is the variable that will help the program pick out the correct file from the data_raw folder, and may need to be changed by the user according to the filename. It should be unique to the file(s) you want to analyze. 
 The instrument.pattern refers to which instrument was used to analyze the data.
 
 The matching.pattern and software.pattern variables should not be changed by the user, only commented or uncommented.
 ```{r Pattern matching, include = TRUE}
 ### Choose software pattern ###
 # MSDial
-# software.pattern <- "MSDial"
+software.pattern <- "MSDial"
 
 # Skyline
-software.pattern <- "Skyline"
+# software.pattern <- "Skyline"
 
 ### Choose instrument pattern ###
 # QE
@@ -109,14 +110,16 @@ instrument.pattern <- "QE"
 #instrument.pattern <- "TQS"
 
 ### Create file pattern ###
-file.pattern <- "Vitamins"
-# file.pattern <- "HILIC"
+# file.pattern <- "Vitamins"
+file.pattern <- "HILIC"
 
 ### Choose matching pattern ###
 
 # Cyano 
-matching.pattern <- "RP.Cyano"
-# matching.pattern <- "pos|neg"
+# matching.pattern <- "RP.Cyano"
+
+# HILIC
+matching.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
@@ -142,7 +145,7 @@ Comment or uncomment the block of variable names appropriate for your run.
 # Comment out the run not being used.
 
 # Skyline Cyano variables:
-skyline.RP.Cyano <- B12_Incubations_Vitamins_August2020
+# skyline.RP.Cyano <- B12_Incubations_Vitamins_August2020
 
 # Skyline HILIC variables: 
 # skyline.HILIC.neg <- X181116_HILIC_neg_MESO.SCOPE_HRM
@@ -155,15 +158,15 @@ skyline.RP.Cyano <- B12_Incubations_Vitamins_August2020
 # SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 # MSDial HILIC variables: 
-# Area.positive <- Area_HILICPos_Example
-# Mz.positive   <- Mz_HILICPos_Example
-# RT.positive   <- RT_HILICPos_Example
-# SN.positive   <- SN_HILICPos_Example
-# 
-# Area.negative <- Area_HILICNeg_Example
-# Mz.negative   <- Mz_HILICNeg_Example
-# RT.negative   <- RT_HILICNeg_Example
-# SN.negative   <- SN_HILICNeg_Example
+Area.positive <- Area_HILICPos_Example
+Mz.positive   <- Mz_HILICPos_Example
+RT.positive   <- RT_HILICPos_Example
+SN.positive   <- SN_HILICPos_Example
+
+Area.negative <- Area_HILICNeg_Example
+Mz.negative   <- Mz_HILICNeg_Example
+RT.negative   <- RT_HILICNeg_Example
+SN.negative   <- SN_HILICNeg_Example
 
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
@@ -219,9 +222,9 @@ The numbers will change depending on whether you are analyzing HILIC vs Cyano da
 ```{r QC parameters, include = TRUE}
 # QE + TQS QC parameters
 
-area.min   <- 5000 # HILIC - 1000, Cyano - 5000
-RT.flex    <- 0.2 # HILIC +/- 0.4 min, Cyano +/- 0.2 min 
-blk.thresh <- 0.2 # HILIC +/- 0.3, Cyano +/- 0.2
+area.min   <- 1000 # HILIC - 1000, Cyano - 5000
+RT.flex    <- 0.4 # HILIC +/- 0.4 min, Cyano +/- 0.2 min 
+blk.thresh <- 0.3 # HILIC +/- 0.3, Cyano +/- 0.2
 SN.min     <- 4 # HILIC - 4, Cyano - 4
 height.min <- 1000
 height.max <- 1.0e8
@@ -229,17 +232,12 @@ height.max <- 1.0e8
 
 # Additional QC parameters for Skyline TQS 
 # Comment this out when using MSDial
-area.max <- 1.0e8
-IR.flex  <- 0.3
-ppm.flex <- 7
+# area.max <- 1.0e8
+# IR.flex  <- 0.3
+# ppm.flex <- 7
 
 print("Parameter values assigned.")
 ```
-
-TQS WILL NEED AS EXPORTS: 
-Ion.ratio.table
-blank.max
-
 
 Run Quality Control and export.
 ```{r MSDial and Skyline QC, include=TRUE}
@@ -323,10 +321,10 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 ```{r Cyano HILIC assignment, include = TRUE}
 
 # MSDial
-# software.pattern <- "MSDial"
+software.pattern <- "MSDial"
 
 # Skyline
-software.pattern <- "Skyline"
+# software.pattern <- "Skyline"
 
 # Cyano Skyline
 # Column.Type = "RP"
@@ -334,20 +332,20 @@ software.pattern <- "Skyline"
 # QC.pattern = "QC_Output_CyanoAq"
 
 # Cyano MSDial
-Column.Type = "RP"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_CYANO"
+# Column.Type = "RP"
+# standards.pattern = "Ingalls"
+# QC.pattern = "QC_Output_CYANO"
 
 # HILIC Skyline
-Column.Type = "HILIC"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_HILIC"
-
-# HILIC MSDial
 # Column.Type = "HILIC"
-# sample.key.pattern = "HILIC"
 # standards.pattern = "Ingalls"
 # QC.pattern = "QC_Output_HILIC"
+
+# HILIC MSDial
+Column.Type = "HILIC"
+sample.key.pattern = "HILIC"
+standards.pattern = "Ingalls"
+QC.pattern = "QC_Output_HILIC"
 
 print(paste(file.pattern, "column type, software pattern, standards pattern, and QC pattern assigned."))
 ```
@@ -397,11 +395,6 @@ if (exists("duplicates.testing")) {
 
 ```
 
-Mini check for Metabolite.Name vs Precursor.Ion.Name.
-```{r Compound Name check, include = TRUE}
-#QCd.data <- QCd.data %>% rename(Metabolite.Name = Precursor.Ion.Name)
-```
-
 Run BMIS.
 ```{r BMIS, include=TRUE}
 source("src/BMIS.R")
@@ -444,16 +437,19 @@ print("Dilution factor, injection volume, and filtered volume assigned.")
 
 *User action required*
 Comment out appropriate variable blocks according to HILIC or Cyano data.
+"BMIS.pattern" identifies the BMIS output from Section III.
+"QC.pattern" identifies the QC'd output from Section II.
+"names.pattern" identifies the Internal Standards names sheet.
+"Column.Type" is fairly self-explanatory.
+
 ```{r, include = TRUE}
 # Cyano
-# standards.pattern = "Ingalls"
 # BMIS.pattern = "BMIS_Output_RP"
 # QC.pattern = "QC_Output_CYANO"
 # names.pattern = "Names"
 # Column.Type = "RP"
 
 # HILIC
-standards.pattern = "Ingalls"
 BMIS.pattern = "BMIS_Output_HILIC"
 QC.pattern = "QC_Output_HILIC"
 names.pattern = "Names"
@@ -482,7 +478,6 @@ if (length(check.duplicates) == 0) {
   HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE)
 }
 ```
-
 
 *User action required*
 If you are working with HILIC data, make sure your filtering step makes sense.

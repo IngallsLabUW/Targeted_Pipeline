@@ -2,10 +2,11 @@
 
 
 # Import standards and filter NAs ---------------------------------------------------------------
-filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = standards.pattern))
-filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
+# filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = standards.pattern))
+# filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
 
-Ingalls.Standards <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
+Ingalls.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv",
+                               stringsAsFactors = FALSE, header = TRUE) %>%
   filter(Column == Column.Type) %>%
   rename(Metabolite.Name = Compound.Name) %>%
   select(Metabolite.Name,Compound.Type, QE.RF.ratio, Conc..uM, HILICMix, Emperical.Formula) %>%
