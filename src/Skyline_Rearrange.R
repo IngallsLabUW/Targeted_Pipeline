@@ -2,7 +2,7 @@
 
 csvFileName <- paste("data_intermediate/", software.pattern, "_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
 
-if (file.pattern == "HILIC") {
+if (matching.pattern == "pos|neg") {
   replace_nonvalues <- function(x) (gsub("#N/A", NA, x))
   
   

@@ -17,6 +17,13 @@ if (instrument.pattern == "TQS") {
 # Stop program if this run has more or fewer runtypes than the normal std, blk, poo, and smp.
 skyline.runtypes <- IdentifyRunTypes(skyline.output)
 
+# # In HILIC compounds, filter mixes.
+# if ("Column" %in% colnames(Full.data.RF)) {
+#   Full.data.RF <- Full.data.RF %>%
+#     filter(str_detect(Replicate.Name, as.character(HILICMix)) | str_detect(Replicate.Name, "H2OInMatrix"))
+# }
+
+
 # Depending on instrument.pattern, create comparison tables --------------------------------------
 
 if (instrument.pattern == "TQS") {

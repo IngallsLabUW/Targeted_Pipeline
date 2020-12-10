@@ -1,3 +1,6 @@
+# But don't ignore these files: 
+!*/data_extras/
+
 # Ignore the following files
 .Rproj.user
 .Rhistory
@@ -9,7 +12,6 @@
 *.png
 *.txt
 
-# But don't ignore these files: 
-!*/data_extras/
+
 
 
