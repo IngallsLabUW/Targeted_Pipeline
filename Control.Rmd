@@ -70,7 +70,8 @@ print("Subdirectories emptied.")
 
 ----------------------------------------------------------------------------------------------------------------------------
 Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN). 
-Or, import your single Skyline file in long format.
+Or, import your single Skyline file in long format. Once files are imported and cleaned, ensure that the compound names are 
+updated with the latest Ingalls Standards sheet.
 
 Steps for MSDial data:
 Set header, filter unknowns.
@@ -93,7 +94,7 @@ Comment or uncomment the file.pattern, software.pattern, instrument.pattern, and
 The file.pattern is the variable that will help the program pick out the correct file from the data_raw folder, and may need to be changed by the user according to the filename. It should be unique to the file(s) you want to analyze. 
 The instrument.pattern refers to which instrument was used to analyze the data.
 
-The matching.pattern and software.pattern variables should not be changed by the user, only commented or uncommented.
+The matching.pattern and software.pattern variables *should not be changed by the user*, only commented or uncommented.
 ```{r Pattern matching, include = TRUE}
 ### Choose software pattern ###
 # MSDial
