@@ -38,13 +38,12 @@ CheckCompoundNames <- function (df) {
   return(combined.final)
 }
 
+# Remove any illegal values
+replace_nonvalues <- function(x) (gsub("#N/A", NA, x))
 
 csvFileName <- paste("data_intermediate/", software.pattern, "_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
 
 if (matching.pattern == "pos|neg") {
-  
-  # Remove any illegal values
-  replace_nonvalues <- function(x) (gsub("#N/A", NA, x))
   
   skyline.HILIC.pos <- skyline.HILIC.pos %>%
     mutate(Column = "HILICpos")
@@ -66,9 +65,17 @@ if (matching.pattern == "pos|neg") {
   
 } else {
   
-  skyline.classes.changed <- ChangeClasses(skyline.RP.Cyano, start.column = 4, end.column = 8) 
-  skyline.RP.Cyano <- skyline.classes.changed
-  rm(skyline.classes.changed)
+  skyline.RP.Cyano2 <- skyline.RP.Cyano %>%
+    mutate_all(replace_nonvalues)
+  
+  # Change variable classes
+  skyline.classes.changed <- ChangeClasses(skyline.RP.Cyano2, start.column = 4, end.column = 8) 
+  
+  # Check and update any old compound names
+  skyline.names.checked <- CheckCompoundNames(skyline.classes.changed)
+  
+  skyline.RP.Cyano <- skyline.names.checked
+  rm(skyline.classes.changed, skyline.names.checked)
   
   write.csv(skyline.RP.Cyano, csvFileName, row.names = FALSE)
   

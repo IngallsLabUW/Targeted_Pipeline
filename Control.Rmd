@@ -116,16 +116,16 @@ instrument.pattern <- "QE"
 
 ### Create file pattern ###
 # file.pattern <- "Vitamins"
-file.pattern <- "Ant18"
+file.pattern <- "Ant18_QE_Cyano"
 
 ####################################
 
 ### Choose matching pattern ###
 # Cyano 
-# matching.pattern <- "RP.Cyano"
+matching.pattern <- "RP.Cyano"
 
 # HILIC
-matching.pattern <- "pos|neg"
+# matching.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
@@ -151,11 +151,11 @@ Comment or uncomment the block of variable names appropriate for your run.
 # Comment out the run not being used.
 
 # Skyline Cyano variables:
-# skyline.RP.Cyano <- B12_Incubations_Vitamins_August2020
+skyline.RP.Cyano <- Ant18_QE_Cyano
 
 # Skyline HILIC variables: 
-skyline.HILIC.neg <- Ant18_QE_Negative
-skyline.HILIC.pos <- Ant18_QE_Positive
+# skyline.HILIC.neg <- Ant18_QE_Negative
+# skyline.HILIC.pos <- Ant18_QE_Positive
 
 # MSDial Cyano variables: 
 # Area.RP.Cyano <- Area_CYANO_EddyTransect
