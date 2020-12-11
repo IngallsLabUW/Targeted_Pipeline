@@ -21,8 +21,8 @@ if ("Column" %in% colnames(skyline.output)) {
   Internal.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv",
                                  stringsAsFactors = FALSE, header = TRUE) %>%
     filter(Column == "HILIC") %>%
-    filter(Compound.Name_old %in% skyline.output$Precursor.Ion.Name) %>% # tidy this once it's complete
-    rename(Precursor.Ion.Name = Compound.Name_old) %>%
+    filter(Compound.Name %in% skyline.output$Precursor.Ion.Name) %>% # tidy this once it's complete
+    rename(Precursor.Ion.Name = Compound.Name) %>%
     select(Precursor.Ion.Name, HILICMix) %>%
     unique()
   skyline.output.nostds <- skyline.output %>%

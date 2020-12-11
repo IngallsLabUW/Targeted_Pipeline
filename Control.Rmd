@@ -25,7 +25,7 @@ In order to run this script, you will need the following items:
 the Volume Filtered, and the Dilution Factor. An example of this is included in the data_extras/ subdirectory.
 
 *Remember to change the "title" at the top of the page to your project. Below, add a short description of your project*
-This is a template for the Ingalls Targeted Pipeline and encompasses several projects for the code development.
+This is a template for the Ingalls Targeted Pipeline.
 
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
