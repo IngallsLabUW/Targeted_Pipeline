@@ -1,6 +1,5 @@
 # Skyline TQS + QE Quality Control
 
-
 # Import datafiles and accompanying master files --------------------------------------------------------------
 filenames <- RemoveCsv(list.files(path = "data_intermediate", pattern = file.pattern))
 filepath <- file.path("data_intermediate", paste(filenames, ".csv", sep = ""))
@@ -17,12 +16,26 @@ if (instrument.pattern == "TQS") {
 # Stop program if this run has more or fewer runtypes than the normal std, blk, poo, and smp.
 skyline.runtypes <- IdentifyRunTypes(skyline.output)
 
-# # In HILIC compounds, filter mixes.
-# if ("Column" %in% colnames(Full.data.RF)) {
-#   Full.data.RF <- Full.data.RF %>%
-#     filter(str_detect(Replicate.Name, as.character(HILICMix)) | str_detect(Replicate.Name, "H2OInMatrix"))
-# }
-
+# Filter out redundant standard mixes in HILIC runs ---------------------------------------------------------------
+if ("Column" %in% colnames(skyline.output)) {
+  Internal.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv",
+                                 stringsAsFactors = FALSE, header = TRUE) %>%
+    filter(Column == "HILIC") %>%
+    filter(Compound.Name_old %in% skyline.output$Precursor.Ion.Name) %>% # tidy this once it's complete
+    rename(Precursor.Ion.Name = Compound.Name_old) %>%
+    select(Precursor.Ion.Name, HILICMix) %>%
+    unique()
+  skyline.output.nostds <- skyline.output %>%
+    filter(!str_detect(Replicate.Name, "Std"))
+  skyline.output.std <- skyline.output %>%
+    filter(str_detect(Replicate.Name, "Std")) %>%
+    left_join(Internal.Standards) %>%
+    filter(str_detect(Replicate.Name, as.character(HILICMix)) | str_detect(Replicate.Name, regex("H2OinMatrix", ignore_case = TRUE))) %>% 
+    select(-HILICMix)
+  skyline.output <- skyline.output.std %>%
+    rbind(skyline.output.nostds) %>%
+    arrange(Precursor.Ion.Name)
+}
 
 # Depending on instrument.pattern, create comparison tables --------------------------------------
 
