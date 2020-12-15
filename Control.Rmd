@@ -98,10 +98,10 @@ The matching.pattern and software.pattern variables *should not be changed by th
 ```{r Pattern matching, include = TRUE}
 ### Choose software pattern ###
 # MSDial
-# software.pattern <- "MSDial"
+software.pattern <- "MSDial"
 
 # Skyline
-software.pattern <- "Skyline"
+# software.pattern <- "Skyline"
 
 ####################################
 
@@ -116,16 +116,16 @@ instrument.pattern <- "QE"
 
 ### Create file pattern ###
 # file.pattern <- "Vitamins"
-file.pattern <- "Ant18_QE_Cyano"
+file.pattern <- "Example"
 
 ####################################
 
 ### Choose matching pattern ###
 # Cyano 
-matching.pattern <- "RP.Cyano"
+#matching.pattern <- "RP.Cyano"
 
 # HILIC
-# matching.pattern <- "pos|neg"
+matching.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
@@ -151,7 +151,7 @@ Comment or uncomment the block of variable names appropriate for your run.
 # Comment out the run not being used.
 
 # Skyline Cyano variables:
-skyline.RP.Cyano <- Ant18_QE_Cyano
+# skyline.RP.Cyano <- Ant18_QE_Cyano
 
 # Skyline HILIC variables: 
 # skyline.HILIC.neg <- Ant18_QE_Negative
@@ -164,20 +164,20 @@ skyline.RP.Cyano <- Ant18_QE_Cyano
 # SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
 # MSDial HILIC variables: 
-# Area.positive <- Area_HILICPos_Example
-# Mz.positive   <- Mz_HILICPos_Example
-# RT.positive   <- RT_HILICPos_Example
-# SN.positive   <- SN_HILICPos_Example
-# 
-# Area.negative <- Area_HILICNeg_Example
-# Mz.negative   <- Mz_HILICNeg_Example
-# RT.negative   <- RT_HILICNeg_Example
-# SN.negative   <- SN_HILICNeg_Example
+Area.positive <- Area_HILICPos_Example
+Mz.positive   <- Mz_HILICPos_Example
+RT.positive   <- RT_HILICPos_Example
+SN.positive   <- SN_HILICPos_Example
+
+Area.negative <- Area_HILICNeg_Example
+Mz.negative   <- Mz_HILICNeg_Example
+RT.negative   <- RT_HILICNeg_Example
+SN.negative   <- SN_HILICNeg_Example
 
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
 
-Check if dataset is MSDial, rearrange if so, and export.
+Check if dataset is MSDial or Skyline, rearrange if so, and export.
 ```{r Dataset rearrangement, include = TRUE}
 if (software.pattern == "MSDial") {
   source("src/MSDial_Rearrange.R")
@@ -330,7 +330,7 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 software.pattern <- "MSDial"
 
 # Skyline
-# software.pattern <- "Skyline"
+#software.pattern <- "Skyline"
 
 # Cyano Skyline
 # Column.Type = "RP"
@@ -435,7 +435,7 @@ Outputs:
 Enter dilution factor, injection volume, and the filtered volume from the instrument run.
 ```{r, include = TRUE}
 Dilution.Factor = 2
-Injection.Volume = 400 # nanomoles
+Reconstitution.Volume = 400 # microliters
 Volume.Filtered = 5 # liters
 
 print("Dilution factor, injection volume, and filtered volume assigned.")
@@ -457,7 +457,7 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 
 # HILIC
 BMIS.pattern = "BMIS_Output_HILIC"
-QC.pattern = "QC_Output_HILIC"
+QC.pattern = "QC_Output_Example"
 names.pattern = "Names"
 Column.Type = "HILIC"
 

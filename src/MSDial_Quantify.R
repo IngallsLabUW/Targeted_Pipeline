@@ -142,7 +142,7 @@ All.Info <- Quantitative.data %>%
 
 # Add in dilution factor and filtered volume --------------------------------------------------
 All.Info.Quantitative <- All.Info %>%
-  mutate(nmol.in.Enviro.ave = (umol.in.vial.ave*10^-6*Injection.Volume/Volume.Filtered*1000*Dilution.Factor)) %>%
+  mutate(nmol.in.Enviro.ave = (umol.in.vial.ave*10^-6*Reconstitution.Volume/Volume.Filtered*1000*Dilution.Factor)) %>%
   left_join(Full.data %>% select(Metabolite.Name, Emperical.Formula)) %>%
   unique()
 
