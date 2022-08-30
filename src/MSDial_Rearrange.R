@@ -79,14 +79,14 @@ if (TRUE %in% grepl("positive|negative", names(.GlobalEnv), ignore.case = TRUE))
 # Standardize dataset --------------------------------------------------
 combined.semifinal2 <- StandardizeMetabolites(combined.semifinal)
 ###
-Ingalls.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv",
+Ingalls.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                                                              stringsAsFactors = FALSE, header = TRUE)
 update.names <- combined.semifinal2 %>%
   select(Metabolite.Name) %>%
-  rename(Compound.Name_old = Metabolite.Name) %>%
-  left_join(Ingalls.Standards %>% select(Compound.Name, Compound.Name_old)) %>%
-  rename(Compound.Name_new = Compound.Name,
-         Metabolite.Name = Compound.Name_old)
+  rename(Compound_Name_Original = Metabolite.Name) %>%
+  left_join(Ingalls.Standards %>% select(Compound_Name, Compound_Name_Original)) %>%
+  rename(Compound.Name_new = Compound_Name,
+         Metabolite.Name = Compound_Name_Original)
 
 combined.final <- combined.semifinal2 %>%
   left_join(update.names) %>%

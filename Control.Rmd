@@ -100,7 +100,7 @@ The matching.pattern and software.pattern variables *should not be changed by th
 # MSDial
 software.pattern <- "MSDial"
 
-# Skyline
+## Skyline
 # software.pattern <- "Skyline"
 
 ####################################
@@ -110,13 +110,12 @@ software.pattern <- "MSDial"
 instrument.pattern <- "QE"
 
 # TQS
-#instrument.pattern <- "TQS"
+# instrument.pattern <- "TQS"
 
 ####################################
 
 ### Create file pattern ###
-# file.pattern <- "Vitamins"
-file.pattern <- "Example"
+file.pattern <- "EddyTransect"
 
 ####################################
 
@@ -148,31 +147,31 @@ Enter the existing filenames of your run. The above code assigns the variables i
 Comment or uncomment the block of variable names appropriate for your run.
 
 ```{r Dataset reassignment, include = TRUE}
-# Comment out the run not being used.
+## Comment out the run not being used.
 
-# Skyline Cyano variables:
+## Skyline Cyano variables:
 # skyline.RP.Cyano <- Ant18_QE_Cyano
 
-# Skyline HILIC variables: 
-# skyline.HILIC.neg <- Ant18_QE_Negative
-# skyline.HILIC.pos <- Ant18_QE_Positive
+## Skyline HILIC variables: 
+# skyline.HILIC.neg <- X181116_HILIC_neg_MESO.SCOPE_HRM
+# skyline.HILIC.pos <- X181116_HILIC_pos_MESO.SCOPE_HRM
 
-# MSDial Cyano variables: 
+## MSDial Cyano variables: 
 # Area.RP.Cyano <- Area_CYANO_EddyTransect
 # Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
 # RT.RP.Cyano   <- RT_CYANO_EddyTransect
 # SN.RP.Cyano   <- SN_CYANO_EddyTransect
 
-# MSDial HILIC variables: 
-Area.positive <- Area_HILICPos_Example
-Mz.positive   <- Mz_HILICPos_Example
-RT.positive   <- RT_HILICPos_Example
-SN.positive   <- SN_HILICPos_Example
+## MSDial HILIC variables: 
+Area.positive <- Area_HILICPos_EddyTransect
+Mz.positive   <- Mz_HILICPos_EddyTransect
+RT.positive   <- RT_HILICPos_EddyTransect
+SN.positive   <- SN_HILICPos_EddyTransect
 
-Area.negative <- Area_HILICNeg_Example
-Mz.negative   <- Mz_HILICNeg_Example
-RT.negative   <- RT_HILICNeg_Example
-SN.negative   <- SN_HILICNeg_Example
+Area.negative <- Area_HILICNeg_EddyTransect
+Mz.negative   <- Mz_HILICNeg_EddyTransect
+RT.negative   <- RT_HILICNeg_EddyTransect
+SN.negative   <- SN_HILICNeg_EddyTransect
 
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
