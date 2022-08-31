@@ -278,257 +278,257 @@ print(paste(tables, "saved to data/intermediate"))
 rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
 ```
 
---------------------------------------------------------------
+<!-- -------------------------------------------------------------- -->
 
-Section III: Best-Matched Internal Standard (B-MIS)
+<!-- Section III: Best-Matched Internal Standard (B-MIS) -->
 
-In the BMIS step:
-If working with HILIC data, identify and remove duplicates. Justify your decision.
-Match QC'd data with Internal Standards list.
-Identify internal standards and visualize those areas.
-Test if replicate names are identical across the data and the sample key. Stop the analysis process if not.
-Identify/visualize internal standards. Look over it to ensure that things are looking more or less "normal".
-Using pooled and sample runs, calculate internal standard averages. 
-Create an adjusted area for all pooled and sample runs by comparing each mass feature to each internal standard. 
-Calculate RSD for each mass feature/internal standard pair, and use this to choose a matched internal standard.
-Decide whether to accept a B-MIS or not, according to user-defined values.
+<!-- In the BMIS step: -->
+<!-- If working with HILIC data, identify and remove duplicates. Justify your decision. -->
+<!-- Match QC'd data with Internal Standards list. -->
+<!-- Identify internal standards and visualize those areas. -->
+<!-- Test if replicate names are identical across the data and the sample key. Stop the analysis process if not. -->
+<!-- Identify/visualize internal standards. Look over it to ensure that things are looking more or less "normal". -->
+<!-- Using pooled and sample runs, calculate internal standard averages. -->
+<!-- Create an adjusted area for all pooled and sample runs by comparing each mass feature to each internal standard. -->
+<!-- Calculate RSD for each mass feature/internal standard pair, and use this to choose a matched internal standard. -->
+<!-- Decide whether to accept a B-MIS or not, according to user-defined values. -->
 
-***
-Inputs:
-"data_extras/*Sample_Key_from_instrument*.csv"
-"data_processed/*software.pattern*_*instrument.pattern*_QC_Output_*file.pattern*_*DATE*.csv"
-Most recent Ingalls Lab Standards from GitHub:
-https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv
-
-
-Outputs:
-"figures/IS.Raw.Areas.png"
-"figures/BMIS_Evalution.png"
-"data_intermediate/*instrument.pattern*_InternalStdIssues_*DATE*.csv"
-"data_intermediate/MSDial_QuickReport_*file.pattern*_*DATE*.txt"
-"data_processed/MSDial_BMIS_Output_*file.pattern*_*DATE*.csv"
-***
-
-*User action required*
-Enter user data for cut off parameters.
-cut.off = Decrease in RSD of pooled injections, aka improvement cutoff.
-cut.off2 = Relative squared deviation minimum.
-
-```{r BMIS cutoff values, include = TRUE}
-cut.off <- 0.4 
-cut.off2 <- 0.1 
-
-print("B-MIS Cutoff values assigned.")
-```
-
-*User action required*
-Comment out appropriate variable blocks according to HILIC or Cyano data.
-```{r Cyano HILIC assignment, include = TRUE}
-
-# MSDial
-software.pattern <- "MSDial"
-
-# Skyline
-#software.pattern <- "Skyline"
-
-# Cyano Skyline
-# Column.Type = "RP"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_CyanoAq"
-
-# Cyano MSDial
-# Column.Type = "RP"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_CYANO"
-
-# HILIC Skyline
-# Column.Type = "HILIC"
-# standards.pattern = "Ingalls"
-# QC.pattern = "QC_Output_HILIC"
-
-# HILIC MSDial
-Column.Type = "HILIC"
-sample.key.pattern = "HILIC"
-standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_HILIC"
-
-print(paste(file.pattern, "column type, software pattern, standards pattern, and QC pattern assigned."))
-```
-
-Import required files.
-```{r BMIS imports, include=TRUE}
-source("src/BMIS_Imports.R")
-
-print("BMIS files imported.")
-```
-
-If data is HILIC, identify duplicates and decide which to remove 
-IdentifyDuplicates function will confirm if instrument column data exists.
-User will need to use best judgement to decide which duplicate to remove.
-```{r Check duplicates, include=TRUE}
-source("src/Check_Duplicates.R")
-currentDate = Sys.Date()
-csvFileName <- paste("data_intermediate/", software.pattern, 
-                     "_HILIC.duplicates_", currentDate, ".csv", sep = "")
-
-# Using the duplicates.testing table, decide which detected compound to keep, the positive or negative.
-
-if (exists("duplicates.testing") == TRUE) {
-  print("This is a HILIC run. Look at duplicates.testing to decide which compounds to remove.")
-} else {
-  print("Non-HILIC data: no duplicates to remove.")
-}
-
-```
-
-*User action required*
-The below section automatically removes the HILICNeg compounds from the QC'd data. 
-This is not necessarily the correct solution: the user must look at the data to ensure that they are removing the right compounds.
-```{r Remove duplicates, include = TRUE}
-if (exists("duplicates.testing")) {
-  QCd.data <- QCd.data %>%
-    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg")) # This line requires user attention.
-  print("HILICS duplicates removed.")
-
-  Report <- print(paste(HILICS.duplicates$Metabolite.Name, "HILICNeg"))
-  cat(Report, file = "data_intermediate/MSDIAL_HILIC_DuplicateReport.txt")
-  
-  write.csv(duplicates.testing, csvFileName, row.names = FALSE)
-} else {
-  print("Non-HILIC data: no duplicates removed.")
-}
-
-```
-
-Run BMIS.
-```{r BMIS, include=TRUE}
-source("src/BMIS.R")
-```
-
---------------------------------------------------------------
-
-Section IV: Convert from peak area to umol/vial.
-
-In the quantify step:
-Get response factors and response factor ratios.
-Quantify samples without an internal standard.
-Quantify samples with an internal standard.
-Accounting for dilution and filtered volume, calculate environmental quantities.
-Summarize carbon and nitrogen.
-
-***
-Inputs:
-"data_extras/Ingalls_Lab_Standards.csv"
-"data_extras/InternalStandardNames.csv"
-"data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
-"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
-
-Outputs:
-"data_intermediate/MSDial_ResponseFactorRatios_*DATE*.csv"
-"data_processed/Quantified_Summary_*Column.Type*_*DATE*.csv
-"data_processed/Quantified_Measurements*Column.Type*_*DATE*.csv
-"data_processed/Quantified_perSampID_*Column.Type*_*DATE*.csv
-***
-
-*User action required*
-Enter dilution factor, injection volume, and the filtered volume from the instrument run.
-```{r, include = TRUE}
-Dilution.Factor = 2
-Reconstitution.Volume = 400 # microliters
-Volume.Filtered = 5 # liters
-
-print("Dilution factor, injection volume, and filtered volume assigned.")
-```
-
-*User action required*
-Comment out appropriate variable blocks according to HILIC or Cyano data.
-"BMIS.pattern" identifies the BMIS output from Section III.
-"QC.pattern" identifies the QC'd output from Section II.
-"names.pattern" identifies the Internal Standards names sheet.
-"Column.Type" is fairly self-explanatory.
-
-```{r, include = TRUE}
-# Cyano
-# BMIS.pattern = "BMIS_Output_RP"
-# QC.pattern = "QC_Output_CYANO"
-# names.pattern = "Names"
-# Column.Type = "RP"
-
-# HILIC
-BMIS.pattern = "BMIS_Output_HILIC"
-QC.pattern = "QC_Output_Example"
-names.pattern = "Names"
-Column.Type = "HILIC"
-
-print(paste(file.pattern, "matching patterns assigned."))
-
-```
-
-Import required files for quantification.
-```{r Quantify imports, include = TRUE}
-source("src/MSDial_Quantify_Imports.R")
-
-print("Quantification files imported.")
-```
-
-Repeat the HILIC duplicates step.
-```{r Check duplicates, include=TRUE}
-check.duplicates <- list.files("data_intermediate", pattern = "duplicate", full.names = TRUE)
-
-if (length(check.duplicates) == 0) {
-  print("No HILIC data exists.")
-} else {
-  print("HILIC data exists.")
-  
-  HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE)
-}
-```
-
-*User action required*
-If you are working with HILIC data, make sure your filtering step makes sense.
-```{r Check duplicates, include=TRUE}
-
-if (length(check.duplicates) == 0) {
-  print("No HILIC data exists.")
-} else {
-  HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE)
-  QCd.data <- QCd.data %>%
-    filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg"))
-  print("Duplicates removed.")
-}
-
-```
-
-Check which kinds of standards have been run.
-*****************************************************************************
-This function is unlikely to work on all runs due to sampID differences.
-It will almost definitely need to be modified to apply to the dataset at hand.
-*****************************************************************************
-```{r, include = TRUE}
-Full.data <- CheckStandards2(Full.data)
-```
-
-Quantify.
-```{r, include = TRUE}
-source("src/MSDial_Quantify.R")
-```
-
-Review the "Final" files to ensure everything is correct.
-
-Save and export files.
-```{r, include = FALSE}
-currentDate <- Sys.Date()
-csvFileName.summed <- paste("data_processed/Quantified_Summary_", Column.Type, "_", currentDate, ".csv", sep = "")
-csvFileName.final <- paste("data_processed/Quantified_Measurements_", Column.Type, "_", currentDate, ".csv", sep = "")
-csvFileName.perID <- paste("data_processed/Quantified_perSampID_", Column.Type, "_", currentDate, ".csv", sep = "")
+<!-- *** -->
+<!-- Inputs: -->
+<!-- "data_extras/*Sample_Key_from_instrument*.csv" -->
+<!-- "data_processed/*software.pattern*_*instrument.pattern*_QC_Output_*file.pattern*_*DATE*.csv" -->
+<!-- Most recent Ingalls Lab Standards from GitHub: -->
+<!-- https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv -->
 
 
-write.csv(Final.Quantitative.Summed, csvFileName.summed, row.names = FALSE)
-write.csv(Final.Quantitative, csvFileName.final, row.names = FALSE)
-write.csv(Final.All.perSampID, csvFileName.perID, row.names = FALSE)
-```
+<!-- Outputs: -->
+<!-- "figures/IS.Raw.Areas.png" -->
+<!-- "figures/BMIS_Evalution.png" -->
+<!-- "data_intermediate/*instrument.pattern*_InternalStdIssues_*DATE*.csv" -->
+<!-- "data_intermediate/MSDial_QuickReport_*file.pattern*_*DATE*.txt" -->
+<!-- "data_processed/MSDial_BMIS_Output_*file.pattern*_*DATE*.csv" -->
+<!-- *** -->
 
-Clear environment.
-```{r, include=FALSE}
-rm(list = ls())
-```
+<!-- *User action required* -->
+<!-- Enter user data for cut off parameters. -->
+<!-- cut.off = Decrease in RSD of pooled injections, aka improvement cutoff. -->
+<!-- cut.off2 = Relative squared deviation minimum. -->
+
+<!-- ```{r BMIS cutoff values, include = TRUE} -->
+<!-- cut.off <- 0.4 -->
+<!-- cut.off2 <- 0.1 -->
+
+<!-- print("B-MIS Cutoff values assigned.") -->
+<!-- ``` -->
+
+<!-- *User action required* -->
+<!-- Comment out appropriate variable blocks according to HILIC or Cyano data. -->
+<!-- ```{r Cyano HILIC assignment, include = TRUE} -->
+
+<!-- # MSDial -->
+<!-- software.pattern <- "MSDial" -->
+
+<!-- # Skyline -->
+<!-- #software.pattern <- "Skyline" -->
+
+<!-- # Cyano Skyline -->
+<!-- # Column.Type = "RP" -->
+<!-- # standards.pattern = "Ingalls" -->
+<!-- # QC.pattern = "QC_Output_CyanoAq" -->
+
+<!-- # Cyano MSDial -->
+<!-- # Column.Type = "RP" -->
+<!-- # standards.pattern = "Ingalls" -->
+<!-- # QC.pattern = "QC_Output_CYANO" -->
+
+<!-- # HILIC Skyline -->
+<!-- # Column.Type = "HILIC" -->
+<!-- # standards.pattern = "Ingalls" -->
+<!-- # QC.pattern = "QC_Output_HILIC" -->
+
+<!-- # HILIC MSDial -->
+<!-- Column.Type = "HILIC" -->
+<!-- sample.key.pattern = "HILIC" -->
+<!-- standards.pattern = "Ingalls" -->
+<!-- QC.pattern = "QC_Output_HILIC" -->
+
+<!-- print(paste(file.pattern, "column type, software pattern, standards pattern, and QC pattern assigned.")) -->
+<!-- ``` -->
+
+<!-- Import required files. -->
+<!-- ```{r BMIS imports, include=TRUE} -->
+<!-- source("src/BMIS_Imports.R") -->
+
+<!-- print("BMIS files imported.") -->
+<!-- ``` -->
+
+<!-- If data is HILIC, identify duplicates and decide which to remove -->
+<!-- IdentifyDuplicates function will confirm if instrument column data exists. -->
+<!-- User will need to use best judgement to decide which duplicate to remove. -->
+<!-- ```{r Check duplicates, include=TRUE} -->
+<!-- source("src/Check_Duplicates.R") -->
+<!-- currentDate = Sys.Date() -->
+<!-- csvFileName <- paste("data_intermediate/", software.pattern, -->
+<!--                      "_HILIC.duplicates_", currentDate, ".csv", sep = "") -->
+
+<!-- # Using the duplicates.testing table, decide which detected compound to keep, the positive or negative. -->
+
+<!-- if (exists("duplicates.testing") == TRUE) { -->
+<!--   print("This is a HILIC run. Look at duplicates.testing to decide which compounds to remove.") -->
+<!-- } else { -->
+<!--   print("Non-HILIC data: no duplicates to remove.") -->
+<!-- } -->
+
+<!-- ``` -->
+
+<!-- *User action required* -->
+<!-- The below section automatically removes the HILICNeg compounds from the QC'd data. -->
+<!-- This is not necessarily the correct solution: the user must look at the data to ensure that they are removing the right compounds. -->
+<!-- ```{r Remove duplicates, include = TRUE} -->
+<!-- if (exists("duplicates.testing")) { -->
+<!--   QCd.data <- QCd.data %>% -->
+<!--     filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg")) # This line requires user attention. -->
+<!--   print("HILICS duplicates removed.") -->
+
+<!--   Report <- print(paste(HILICS.duplicates$Metabolite.Name, "HILICNeg")) -->
+<!--   cat(Report, file = "data_intermediate/MSDIAL_HILIC_DuplicateReport.txt") -->
+
+<!--   write.csv(duplicates.testing, csvFileName, row.names = FALSE) -->
+<!-- } else { -->
+<!--   print("Non-HILIC data: no duplicates removed.") -->
+<!-- } -->
+
+<!-- ``` -->
+
+<!-- Run BMIS. -->
+<!-- ```{r BMIS, include=TRUE} -->
+<!-- source("src/BMIS.R") -->
+<!-- ``` -->
+
+<!-- -------------------------------------------------------------- -->
+
+<!-- Section IV: Convert from peak area to umol/vial. -->
+
+<!-- In the quantify step: -->
+<!-- Get response factors and response factor ratios. -->
+<!-- Quantify samples without an internal standard. -->
+<!-- Quantify samples with an internal standard. -->
+<!-- Accounting for dilution and filtered volume, calculate environmental quantities. -->
+<!-- Summarize carbon and nitrogen. -->
+
+<!-- *** -->
+<!-- Inputs: -->
+<!-- "data_extras/Ingalls_Lab_Standards.csv" -->
+<!-- "data_extras/InternalStandardNames.csv" -->
+<!-- "data_processed/BMIS_Output_*file.pattern*_*DATE*.csv" -->
+<!-- "data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv" -->
+
+<!-- Outputs: -->
+<!-- "data_intermediate/MSDial_ResponseFactorRatios_*DATE*.csv" -->
+<!-- "data_processed/Quantified_Summary_*Column.Type*_*DATE*.csv -->
+<!-- "data_processed/Quantified_Measurements*Column.Type*_*DATE*.csv -->
+<!-- "data_processed/Quantified_perSampID_*Column.Type*_*DATE*.csv -->
+<!-- *** -->
+
+<!-- *User action required* -->
+<!-- Enter dilution factor, injection volume, and the filtered volume from the instrument run. -->
+<!-- ```{r, include = TRUE} -->
+<!-- Dilution.Factor = 2 -->
+<!-- Reconstitution.Volume = 400 # microliters -->
+<!-- Volume.Filtered = 5 # liters -->
+
+<!-- print("Dilution factor, injection volume, and filtered volume assigned.") -->
+<!-- ``` -->
+
+<!-- *User action required* -->
+<!-- Comment out appropriate variable blocks according to HILIC or Cyano data. -->
+<!-- "BMIS.pattern" identifies the BMIS output from Section III. -->
+<!-- "QC.pattern" identifies the QC'd output from Section II. -->
+<!-- "names.pattern" identifies the Internal Standards names sheet. -->
+<!-- "Column.Type" is fairly self-explanatory. -->
+
+<!-- ```{r, include = TRUE} -->
+<!-- # Cyano -->
+<!-- # BMIS.pattern = "BMIS_Output_RP" -->
+<!-- # QC.pattern = "QC_Output_CYANO" -->
+<!-- # names.pattern = "Names" -->
+<!-- # Column.Type = "RP" -->
+
+<!-- # HILIC -->
+<!-- BMIS.pattern = "BMIS_Output_HILIC" -->
+<!-- QC.pattern = "QC_Output_Example" -->
+<!-- names.pattern = "Names" -->
+<!-- Column.Type = "HILIC" -->
+
+<!-- print(paste(file.pattern, "matching patterns assigned.")) -->
+
+<!-- ``` -->
+
+<!-- Import required files for quantification. -->
+<!-- ```{r Quantify imports, include = TRUE} -->
+<!-- source("src/MSDial_Quantify_Imports.R") -->
+
+<!-- print("Quantification files imported.") -->
+<!-- ``` -->
+
+<!-- Repeat the HILIC duplicates step. -->
+<!-- ```{r Check duplicates, include=TRUE} -->
+<!-- check.duplicates <- list.files("data_intermediate", pattern = "duplicate", full.names = TRUE) -->
+
+<!-- if (length(check.duplicates) == 0) { -->
+<!--   print("No HILIC data exists.") -->
+<!-- } else { -->
+<!--   print("HILIC data exists.") -->
+
+<!--   HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- *User action required* -->
+<!-- If you are working with HILIC data, make sure your filtering step makes sense. -->
+<!-- ```{r Check duplicates, include=TRUE} -->
+
+<!-- if (length(check.duplicates) == 0) { -->
+<!--   print("No HILIC data exists.") -->
+<!-- } else { -->
+<!--   HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE) -->
+<!--   QCd.data <- QCd.data %>% -->
+<!--     filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg")) -->
+<!--   print("Duplicates removed.") -->
+<!-- } -->
+
+<!-- ``` -->
+
+<!-- Check which kinds of standards have been run. -->
+<!-- ***************************************************************************** -->
+<!-- This function is unlikely to work on all runs due to sampID differences. -->
+<!-- It will almost definitely need to be modified to apply to the dataset at hand. -->
+<!-- ***************************************************************************** -->
+<!-- ```{r, include = TRUE} -->
+<!-- Full.data <- CheckStandards2(Full.data) -->
+<!-- ``` -->
+
+<!-- Quantify. -->
+<!-- ```{r, include = TRUE} -->
+<!-- source("src/MSDial_Quantify.R") -->
+<!-- ``` -->
+
+<!-- Review the "Final" files to ensure everything is correct. -->
+
+<!-- Save and export files. -->
+<!-- ```{r, include = FALSE} -->
+<!-- currentDate <- Sys.Date() -->
+<!-- csvFileName.summed <- paste("data_processed/Quantified_Summary_", Column.Type, "_", currentDate, ".csv", sep = "") -->
+<!-- csvFileName.final <- paste("data_processed/Quantified_Measurements_", Column.Type, "_", currentDate, ".csv", sep = "") -->
+<!-- csvFileName.perID <- paste("data_processed/Quantified_perSampID_", Column.Type, "_", currentDate, ".csv", sep = "") -->
+
+
+<!-- write.csv(Final.Quantitative.Summed, csvFileName.summed, row.names = FALSE) -->
+<!-- write.csv(Final.Quantitative, csvFileName.final, row.names = FALSE) -->
+<!-- write.csv(Final.All.perSampID, csvFileName.perID, row.names = FALSE) -->
+<!-- ``` -->
+
+<!-- Clear environment. -->
+<!-- ```{r, include=FALSE} -->
+<!-- rm(list = ls()) -->
+<!-- ``` -->
