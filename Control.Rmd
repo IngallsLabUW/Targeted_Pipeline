@@ -13,9 +13,9 @@ This markdown script controls the targeted pipeline for targeted data.
 The script handles data from both QE and TQS instruments, 
 as well as data processed by Skyline and MSDial metabolomics processing platforms.
 
-It contains four major sections:
+It contains four major sections: 
 Section I: Import and cleaning/rearranging of data.
-Section II: Quality control using user-defined parameters.
+Section II: Quality control using user-defined parameters. 
 Section III: Applying Best-Matched Internal Standard (B-MIS).
 Section IV: Quantifying peak area to umol/vial when possible.
 
@@ -115,7 +115,7 @@ instrument.pattern <- "QE"
 ####################################
 
 ### Create file pattern ###
-file.pattern <- "EddyTransect"
+file.pattern <- "Example"
 
 ####################################
 
@@ -157,21 +157,21 @@ Comment or uncomment the block of variable names appropriate for your run.
 # skyline.HILIC.pos <- X181116_HILIC_pos_MESO.SCOPE_HRM
 
 ## MSDial Cyano variables: 
-# Area.RP.Cyano <- Area_CYANO_EddyTransect
-# Mz.RP.Cyano   <- Mz_CYANO_EddyTransect
-# RT.RP.Cyano   <- RT_CYANO_EddyTransect
-# SN.RP.Cyano   <- SN_CYANO_EddyTransect
+# Area.RP.Cyano <- Area_CYANO_Example
+# Mz.RP.Cyano   <- Mz_CYANO_Example
+# RT.RP.Cyano   <- RT_CYANO_Example
+# SN.RP.Cyano   <- SN_CYANO_Example
 
 ## MSDial HILIC variables: 
-Area.positive <- Area_HILICPos_EddyTransect
-Mz.positive   <- Mz_HILICPos_EddyTransect
-RT.positive   <- RT_HILICPos_EddyTransect
-SN.positive   <- SN_HILICPos_EddyTransect
+Area.positive <- Area_HILICPos_Example
+Mz.positive   <- Mz_HILICPos_Example
+RT.positive   <- RT_HILICPos_Example
+SN.positive   <- SN_HILICPos_Example
 
-Area.negative <- Area_HILICNeg_EddyTransect
-Mz.negative   <- Mz_HILICNeg_EddyTransect
-RT.negative   <- RT_HILICNeg_EddyTransect
-SN.negative   <- SN_HILICNeg_EddyTransect
+Area.negative <- Area_HILICNeg_Example
+Mz.negative   <- Mz_HILICNeg_Example
+RT.negative   <- RT_HILICNeg_Example
+SN.negative   <- SN_HILICNeg_Example
 
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
