@@ -2,10 +2,10 @@
 
 # Match QC'd data with Internal Standards list ----------------------------------------------------------
 Data.withIS <- QCd.data %>%
-  filter(Metabolite.Name %in% Internal.Standards$Compound.Name)
+  filter(Metabolite.Name %in% Internal.Standards$Compound_Name)
 
 Data.NoIS <- QCd.data %>%
-  filter(!Metabolite.Name %in% Internal.Standards$Compound.Name)
+  filter(!Metabolite.Name %in% Internal.Standards$Compound_Name)
 
 # Create Internal Standard data -----------------------------------------------------------------------
 Int.Stds.data <- Data.withIS %>%
@@ -49,7 +49,7 @@ Data.long  <- Data.NoIS %>%
   rename(Mass.Feature = Metabolite.Name) %>%
   select(Replicate.Name, Mass.Feature, Area.with.QC) %>%
   # Uncomment the next line to test the stop error message below.
-  # filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
+  #filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
   arrange(Replicate.Name)
 
 test_isdata <- as.data.frame(sort(unique(Int.Stds.data$Replicate.Name)), stringsAsFactors = FALSE)
