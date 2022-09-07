@@ -2,14 +2,14 @@
 
 # Get response factors for transect compounds ----------------------------------
 Full.data.RF <- Full.data %>%
-  mutate(RF = Area.with.QC/Conc..uM) %>%
-  filter(!Compound.Type == "Internal Standard") %>%
+  mutate(RF = Area.with.QC/Concentration_uM) %>%
+  filter(!Compound_Type == "Internal Standard") %>%
   mutate(Replicate.Name = substr(Replicate.Name, 1, nchar(Replicate.Name)-2))
 
 # In HILIC compounds, filter mixes.
 if ("Column" %in% colnames(Full.data.RF)) {
   Full.data.RF <- Full.data.RF %>%
-    filter(str_detect(Replicate.Name, as.character(HILICMix)) | str_detect(Replicate.Name, "H2OInMatrix"))
+    filter(str_detect(Replicate.Name, as.character(HILIC_Mix)) | str_detect(Replicate.Name, "H2OInMatrix"))
 }
 
 # Calculate RF max and min using only standards in water.
