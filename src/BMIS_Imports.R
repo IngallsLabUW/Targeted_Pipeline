@@ -11,11 +11,11 @@ SampKey.all <- assign(make.names(filename), read.csv(filepath, stringsAsFactors 
            str_replace("-",".")) 
 
 # Internal Standards
-Internal.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv",
+Internal.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                                stringsAsFactors = FALSE, header = TRUE) %>%
-  filter(Column == Column.Type) %>%
-  filter(Compound.Type == "Internal Standard")
-Internal.Standards$Compound.Name <- TrimWhitespace(Internal.Standards$Compound.Name)
+  filter(Column == Column) %>%
+  filter(Compound_Type == "Internal Standard")
+Internal.Standards$Compound_Name <- TrimWhitespace(Internal.Standards$Compound_Name)
 
 # QC'd output
 filename <- RemoveCsv(list.files(path = "data_processed/", pattern = software.pattern))
