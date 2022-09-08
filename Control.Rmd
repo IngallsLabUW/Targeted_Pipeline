@@ -23,9 +23,9 @@ In order to run this script, you will need the following items:
 1. The instrument output in csv format from either MSDial or Skyline.
 2. A sample key from the run, which should include information such as the Column, the Bio Normalization,
 the Volume Filtered, and the Dilution Factor. An example of this is included in the data_extras/ subdirectory.
+3. The Ingalls Standards sheet, located on the Ingalls GitHub: https://github.com/IngallsLabUW/Ingalls_Standards
 
-*Remember to change the "title" at the top of the page to your project. Below, add a short description of your project*
-This is a template for the Ingalls Targeted Pipeline.
+*This is a template for the Ingalls Targeted Pipeline! You will need to adjust it to reflect your data!*
 
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -237,7 +237,6 @@ height.max <- 1.0e8
 
 
 # Additional QC parameters for Skyline TQS 
-# Comment this out when using MSDial
 area.max <- 1.0e8
 IR.flex  <- 0.3
 ppm.flex <- 7
@@ -376,6 +375,8 @@ csvFileName <- paste("data_intermediate/", software.pattern,
 
 if (exists("duplicates.testing") == TRUE) {
   print("This is a HILIC run. Look at duplicates.testing to decide which compounds to remove.")
+  
+  write.csv(HILICS.duplicates, csvFileName, row.names = FALSE)
 } else {
   print("Non-HILIC data: no duplicates to remove.")
 }
@@ -389,7 +390,7 @@ This is not necessarily the correct solution: the user must look at the data to 
 if (exists("duplicates.testing")) {
   QCd.data <- QCd.data %>%
     filter(!(Metabolite.Name %in% HILICS.duplicates$Metabolite.Name & Column == "HILICNeg")) # This line requires user attention.
-  print("HILICS duplicates removed.")
+  print("HILIC duplicates removed: negative ion mode.")
 
   Report <- print(paste(HILICS.duplicates$Metabolite.Name, "HILICNeg"))
   cat(Report, file = "data_intermediate/MSDIAL_HILIC_DuplicateReport.txt")
@@ -506,7 +507,7 @@ This function is unlikely to work on all runs due to sampID differences.
 It will almost definitely need to be modified to apply to the dataset at hand.
 *****************************************************************************
 ```{r, include = TRUE}
-Full.data <- CheckStandards2(Full.data)
+Full.stds.data <- CheckStandards2(Full.stds.data)
 ```
 
 Quantify.

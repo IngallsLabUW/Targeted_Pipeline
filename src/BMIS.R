@@ -10,8 +10,7 @@ Data.NoIS <- QCd.data %>%
 # Create Internal Standard data -----------------------------------------------------------------------
 Int.Stds.data <- Data.withIS %>%
   select(Replicate.Name, Metabolite.Name, Area.with.QC) %>%
-  mutate(Mass.Feature = Metabolite.Name) %>%
-  select(-Metabolite.Name)
+  rename(Mass.Feature = Metabolite.Name) 
 
 # Add injection volume ---------------------------------------------------------------------------------
 SampKey <- SampKey.all %>%
@@ -48,8 +47,6 @@ print(IS.Raw.Area.Plot)
 Data.long  <- Data.NoIS %>%
   rename(Mass.Feature = Metabolite.Name) %>%
   select(Replicate.Name, Mass.Feature, Area.with.QC) %>%
-  # Uncomment the next line to test the stop error message below.
-  #filter(!str_detect(Replicate.Name, regex("dda", ignore_case = TRUE))) %>%
   arrange(Replicate.Name)
 
 test_isdata <- as.data.frame(sort(unique(Int.Stds.data$Replicate.Name)), stringsAsFactors = FALSE)
@@ -60,20 +57,17 @@ print(paste("Your replicate names are identical:", test))
 if(test == FALSE) 
   stop("Error: Your replicate names are not matched across datasets!")
 
-# Caluclate mean values for each Internal Standard--------------------------------------------------------
+# Calculate mean values for each Internal Standard--------------------------------------------------------
 Int.Stds.means <- Int.Stds.data %>%
-  mutate(Mass.Feature = as.factor(Mass.Feature)) %>%
   group_by(Mass.Feature) %>%
-  summarise(Average.Area = mean(as.numeric(Area.with.QC), na.rm = TRUE)) %>%
-  mutate(Mass.Feature = as.character(Mass.Feature))
-
+  summarise(Average.Area = mean(as.numeric(Area.with.QC), na.rm = TRUE))
 
 # Normalize to each internal Standard--------------------------------------------------------------------
 Data.binded <- rbind(Int.Stds.data, Data.long) %>%
   arrange(Mass.Feature)
 
 Split_Dat <- list()
-
+# MIS stands for "Matched Internal Standard"
 for (i in 1:length(unique(Int.Stds.data$Mass.Feature))) {
   Split_Dat[[i]] <- Data.binded %>%
     mutate(MIS = unique(Int.Stds.data$Mass.Feature)[i]) %>%
@@ -98,7 +92,7 @@ Mydata.new <- Data.area.norm %>%
 
 # Look only at the Pooled samples, to get a lowest RSD of the pooled possible (RSD_ofPoo),
 # then choose which IS reduces the RSD the most (Poo.Picked.IS)
-Poodata <- Mydata.new %>%
+Poodata1 <- Mydata.new %>%
   filter(type == "Poo") %>%
   group_by(SampID, Mass.Feature, MIS) %>%
   summarise(RSD_ofPoo_IND = sd(Adjusted.Area, na.rm = TRUE) / mean(Adjusted.Area, na.rm = TRUE)) %>%
@@ -108,13 +102,14 @@ Poodata <- Mydata.new %>%
   mutate(RSD_ofPoo = ifelse(RSD_ofPoo == "NaN", NA, RSD_ofPoo))
 
 
-Poodata <- Poodata %>%
-  left_join(Poodata %>% group_by(Mass.Feature) %>%
+Poodata2 <- Poodata1 %>%
+  left_join(Poodata1 %>% group_by(Mass.Feature) %>%
               summarise(Poo.Picked.IS = unique(MIS)[which.min(RSD_ofPoo)] [1]))
 
 
 # Get the original RSD, calculate RSD change, decide if MIS is acceptable -------------------------------
-Poodata <- left_join(Poodata, Poodata %>%
+#Poodata <- left_join(Poodata, Poodata %>%
+Poodata3 <- left_join(Poodata2, Poodata2 %>%
                        filter(MIS == "Inj_vol" ) %>%
                        mutate(Orig_RSD = RSD_ofPoo) %>%
                        select(-RSD_ofPoo, -MIS)) %>%
@@ -126,12 +121,12 @@ Poodata <- left_join(Poodata, Poodata %>%
 
 # Adds a column that has the BMIS, not just Poo.Picked.IS
 # Changes the FinalBMIS to inject_volume if it's no good
-Fixed.poodata <- Poodata %>%
+Fixed.poodata <- Poodata3 %>%
   filter(MIS == Poo.Picked.IS) %>%
   mutate(FinalBMIS = ifelse(accept_MIS == "FALSE", "Inj_vol", Poo.Picked.IS)) %>%
   mutate(FinalRSD = RSD_ofPoo)
 
-New.poodata <- Poodata %>%
+New.poodata <- Poodata3 %>%
   left_join(Fixed.poodata %>% select(Mass.Feature, FinalBMIS)) %>%
   filter(MIS == FinalBMIS) %>%
   mutate(FinalRSD = RSD_ofPoo)
@@ -155,7 +150,7 @@ IS_toISdat <- Mydata.new %>%
   filter(type == "Smp") %>%
   group_by(Mass.Feature, MIS) %>%
   summarize(RSD_of_Smp = sd(Adjusted.Area, na.rm = TRUE) / mean(Adjusted.Area, na.rm = TRUE)) %>%
-  left_join(Poodata %>% select(Mass.Feature, MIS, RSD_ofPoo, accept_MIS))
+  left_join(Poodata3 %>% select(Mass.Feature, MIS, RSD_ofPoo, accept_MIS))
 
 injectONlY_toPlot <- IS_toISdat %>%
   filter(MIS == "Inj_vol")

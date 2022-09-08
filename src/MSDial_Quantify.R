@@ -1,7 +1,7 @@
 # This code retrieves mol/L from peak areas of targeted compounds.
 
-# Get response factors for transect compounds ----------------------------------
-Full.data.RF <- Full.data %>%
+# Get response factors ----------------------------------
+Full.data.RF <- Full.stds.data %>%
   mutate(RF = Area.with.QC/Concentration_uM) %>%
   filter(!Compound_Type == "Internal Standard") %>%
   mutate(Replicate.Name = substr(Replicate.Name, 1, nchar(Replicate.Name)-2))
@@ -25,7 +25,6 @@ Full.data.RF.dimensions$RF.min[is.infinite(Full.data.RF.dimensions$RF.min) | is.
 Full.data.RF.dimensions <- Full.data.RF.dimensions %>%
   mutate(RF.diff = RF.max/RF.min) %>%
   unique()
-
 
 # Calculate response factor ratios ----------------------------------------
 # Calculate the response factor ratios using (Standards in Matrix - Water in Matrix) / (Standards in water) for each replicate.
@@ -91,7 +90,7 @@ IS.key <- BMISd.data.filtered %>%
 
 
 # Calculate umol/vial for compounds with matched internal standards -----------------
-IS.data <- Full.data %>%
+IS.data <- Full.stds.data %>%
   filter(Metabolite.Name %in% IS.key$FinalBMIS) %>%
   mutate(IS_Area = Area.with.QC,
          FinalBMIS = Metabolite.Name) %>%
@@ -137,24 +136,23 @@ All.Info <- Quantitative.data %>%
          umol.in.vial.max = ifelse(is.na(umol.in.vial_IS), umol.in.vial.max, NA),
          umol.in.vial.min = ifelse(is.na(umol.in.vial_IS), umol.in.vial.min, NA)) %>%
   rename(Replicate.Name = Sample.Name) %>%
-  select(-runDate, -type, -replicate) # %>%
-  #filter(!str_detect(Replicate.Name, "DDA"))
+  select(-runDate, -type, -replicate) 
 
 # Add in dilution factor and filtered volume --------------------------------------------------
 All.Info.Quantitative <- All.Info %>%
   mutate(nmol.in.Enviro.ave = (umol.in.vial.ave*10^-6*Reconstitution.Volume/Volume.Filtered*1000*Dilution.Factor)) %>%
-  left_join(Full.data %>% select(Metabolite.Name, Emperical.Formula)) %>%
+  left_join(Full.stds.data %>% select(Metabolite.Name, Empirical_Formula)) %>%
   unique()
 
 # Get molecules of carbon and nitrogen ------------------------------------
 All.Info.Molecules <- All.Info.Quantitative  %>%
-  mutate(C = ifelse(is.na(str_extract(Emperical.Formula, "^C\\d\\d")),
-                    str_extract(Emperical.Formula, "^C\\d"),
-                    str_extract(Emperical.Formula, "^C\\d\\d"))) %>%
+  mutate(C = ifelse(is.na(str_extract(Empirical_Formula, "^C\\d\\d")),
+                    str_extract(Empirical_Formula, "^C\\d"),
+                    str_extract(Empirical_Formula, "^C\\d\\d"))) %>%
   mutate(C = as.numeric(str_replace_all(C, "C", ""))) %>%
-  mutate(N = ifelse(str_detect(Emperical.Formula, "N\\D"),
+  mutate(N = ifelse(str_detect(Empirical_Formula, "N\\D"),
                     1,
-                    str_extract(Emperical.Formula, "N\\d"))) %>%
+                    str_extract(Empirical_Formula, "N\\d"))) %>%
   mutate(N = as.numeric(str_replace_all(N, "N", ""))) %>%
   mutate(nmol.C.ave = nmol.in.Enviro.ave*C,
          nmol.N.ave = nmol.in.Enviro.ave*N ) %>%

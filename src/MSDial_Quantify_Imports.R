@@ -1,10 +1,5 @@
 # Imports for the quantification step
 
-
-# Import standards and filter NAs ---------------------------------------------------------------
-# filename <- RemoveCsv(list.files(path = 'data_extras/', pattern = standards.pattern))
-# filepath <- file.path('data_extras', paste(filename, ".csv", sep = ""))
-
 Ingalls.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                                stringsAsFactors = FALSE, header = TRUE) %>%
   filter(Column == Column.Type) %>%
@@ -36,7 +31,7 @@ original.IS.key <- assign(make.names(filename), read.csv(filepath, stringsAsFact
   rename(FinalBMIS = Internal_Standards)
 
 # Apply appropriate filters and isolate standards ---------------------------------------------------------------
-Full.data <- QCd.data %>%
+Full.stds.data <- QCd.data %>%
   filter(Metabolite.Name %in% Ingalls.Standards$Metabolite.Name) %>%
   filter(str_detect(Replicate.Name, "Std")) %>%
   left_join(Ingalls.Standards, by = "Metabolite.Name") %>%
