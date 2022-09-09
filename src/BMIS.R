@@ -13,22 +13,28 @@ Int.Stds.data <- Data.withIS %>%
   rename(Mass.Feature = Metabolite.Name) 
 
 # Add injection volume ---------------------------------------------------------------------------------
-SampKey <- SampKey.all %>%
-  filter(Replicate.Name %in% Int.Stds.data$Replicate.Name) %>%
-  select(Replicate.Name, Bio.Normalization) %>%
-  mutate(Mass.Feature = "Inj_vol",
-         Area.with.QC = Bio.Normalization) %>%
-  select(Replicate.Name, Area.with.QC, Mass.Feature)
+SampKey <- QCd.data %>%
+  select(Replicate.Name) %>%
+  mutate(Area.with.QC = ifelse(str_detect(Replicate.Name, "Half"), 0.5, 1.0)) %>%
+  mutate(Mass.Feature = "Inj_vol")
+# SampKey <- SampKey.all %>%
+#   filter(Replicate.Name %in% Int.Stds.data$Replicate.Name) %>%
+#   select(Replicate.Name, Bio.Normalization) %>%
+#   mutate(Mass.Feature = "Inj_vol",
+#          Area.with.QC = Bio.Normalization) %>%
+#   select(Replicate.Name, Area.with.QC, Mass.Feature)
 
 # Create Internal standard data to identify problematic compounds/replicates ---------------------------
-Int.Stds.data <- rbind(Int.Stds.data, SampKey) 
+Int.Stds.data <- rbind(Int.Stds.data, SampKey) %>%
+  ####
+  separate(Replicate.Name, into = c("a", "RunType", "c", "d"), sep = "_", remove = FALSE)
 
 # Identify internal standards without an Area, i.e. any NA values.
 IS.Issues <- Int.Stds.data[is.na(Int.Stds.data$Area.with.QC), ]
 write.csv(IS.Issues, paste("data_intermediate/MSDial_InternalStdIssues_", currentDate, ".csv", sep = ""))
 
 # Visualize raw areas of Internal Standards -------------------------------------------------------------
-IS.Raw.Area.Plot <- ggplot(Int.Stds.data, aes(x = Replicate.Name, y = Area.with.QC)) +
+IS.Raw.Area.Plot <- ggplot(Int.Stds.data, aes(x = Replicate.Name, y = Area.with.QC, color = RunType)) +
   geom_bar(stat = "identity") +
   facet_wrap( ~Mass.Feature, scales = "free_y") +
   theme(axis.text.x = element_blank(),
@@ -59,11 +65,12 @@ if(test == FALSE)
 
 # Calculate mean values for each Internal Standard--------------------------------------------------------
 Int.Stds.means <- Int.Stds.data %>%
+  select(-c("a", "RunType", "c", "d")) %>%
   group_by(Mass.Feature) %>%
   summarise(Average.Area = mean(as.numeric(Area.with.QC), na.rm = TRUE))
 
 # Normalize to each internal Standard--------------------------------------------------------------------
-Data.binded <- rbind(Int.Stds.data, Data.long) %>%
+Data.binded <- rbind(Int.Stds.data %>% select(-c("a", "RunType", "c", "d")), Data.long) %>%
   arrange(Mass.Feature)
 
 Split_Dat <- list()

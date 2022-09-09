@@ -1,7 +1,7 @@
 ---
 title: "Targeted Pipeline"
 author: "RLionheart"
-date: "08/13/2020"
+date: "09/4/2022"
 output:
   pdf_document: default
   html_document: default
@@ -21,11 +21,10 @@ Section IV: Quantifying peak area to umol/vial when possible.
 
 In order to run this script, you will need the following items:
 1. The instrument output in csv format from either MSDial or Skyline.
-2. A sample key from the run, which should include information such as the Column, the Bio Normalization,
-the Volume Filtered, and the Dilution Factor. An example of this is included in the data_extras/ subdirectory.
-3. The Ingalls Standards sheet, located on the Ingalls GitHub: https://github.com/IngallsLabUW/Ingalls_Standards
+2. The Ingalls Standards sheet, located on the Ingalls GitHub: https://github.com/IngallsLabUW/Ingalls_Standards
 
 *This is a template for the Ingalls Targeted Pipeline! You will need to adjust it to reflect your data!*
+*You will NEVER be able to just plug in data and have this work!*
 
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -295,10 +294,9 @@ Decide whether to accept a B-MIS or not, according to user-defined values.
 
 ***
 Inputs:
-"data_extras/*Sample_Key_from_instrument*.csv"
 "data_processed/*software.pattern*_*instrument.pattern*_QC_Output_*file.pattern*_*DATE*.csv"
 Most recent Ingalls Lab Standards from GitHub:
-https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv
+https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv
 
 
 Outputs:
@@ -348,7 +346,6 @@ software.pattern <- "MSDial"
 
 # HILIC MSDial
 Column.Type = "HILIC"
-sample.key.pattern = "HILIC"
 standards.pattern = "Ingalls"
 QC.pattern = "QC_Output_HILIC"
 
