@@ -418,7 +418,7 @@ Summarize carbon and nitrogen.
 ***
 Inputs:
 "data_extras/Ingalls_Lab_Standards.csv"
-"data_extras/InternalStandardNames.csv"
+"data_extras/*Internal standard concentrations relevent to your run*.csv"
 "data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
 "data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
 
@@ -430,7 +430,7 @@ Outputs:
 ***
 
 *User action required*
-Enter dilution factor, injection volume, and the filtered volume from the instrument run.
+Make sure you know your dilution factor, injection volume, any filtered volume from samples, etc., etc... Keep your units straight! Make sure you understand your units and keep your stoichiometry straight!
 ```{r, include = TRUE}
 Dilution.Factor = 2
 Reconstitution.Volume = 400 # microliters
@@ -443,7 +443,7 @@ print("Dilution factor, injection volume, and filtered volume assigned.")
 Comment out appropriate variable blocks according to HILIC or Cyano data.
 "BMIS.pattern" identifies the BMIS output from Section III.
 "QC.pattern" identifies the QC'd output from Section II.
-"names.pattern" identifies the Internal Standards names sheet.
+"names.pattern" identifies the Internal Standards names sheet (which will change depending on your run!).
 "Column.Type" is fairly self-explanatory.
 
 ```{r, include = TRUE}
@@ -506,6 +506,17 @@ It will almost definitely need to be modified to apply to the dataset at hand.
 ```{r, include = TRUE}
 Full.stds.data <- CheckStandards2(Full.stds.data)
 ```
+
+Calculate the response factors in your data.
+Carefully look at the output from this section! You will likely be missing response factors for compounds. 
+```{r Calculate response factors, include=TRUE}
+source("src/ResponseFactor_Calculation.R")
+
+currentDate = Sys.Date()
+write.csv(Full.data.RF.ratios, paste("data_intermediate/MSDIAL_ResponseFactorRatios_", currentDate, ".csv", sep = ""))
+
+```
+
 
 Quantify.
 ```{r, include = TRUE}

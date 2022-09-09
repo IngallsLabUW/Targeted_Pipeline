@@ -27,7 +27,7 @@ QCd.data <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = F
 filename <- RemoveCsv(list.files(path = "data_extras/", pattern = names.pattern))
 filepath <- file.path("data_extras", paste(filename, ".csv", sep = ""))
 
-original.IS.key <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
+IS.key <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
   rename(FinalBMIS = Internal_Standards)
 
 # Apply appropriate filters and isolate standards ---------------------------------------------------------------

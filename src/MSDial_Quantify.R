@@ -1,67 +1,3 @@
-# This code retrieves mol/L from peak areas of targeted compounds.
-
-# Get response factors ----------------------------------
-Full.data.RF <- Full.stds.data %>%
-  mutate(RF = Area.with.QC/Concentration_uM) %>%
-  filter(!Compound_Type == "Internal Standard") %>%
-  mutate(Replicate.Name = substr(Replicate.Name, 1, nchar(Replicate.Name)-2))
-
-# In HILIC compounds, filter mixes.
-if ("Column" %in% colnames(Full.data.RF)) {
-  Full.data.RF <- Full.data.RF %>%
-    filter(str_detect(Replicate.Name, as.character(HILIC_Mix)) | str_detect(Replicate.Name, "H2OInMatrix"))
-}
-
-# Calculate RF max and min using only standards in water.
-Full.data.RF.dimensions <- Full.data.RF %>%
-  filter(Type == "Standards_Water") %>%
-  group_by(Metabolite.Name) %>%
-  mutate(RF.max = max(RF, na.rm = TRUE),
-         RF.min = min(RF, na.rm = TRUE))
-
-Full.data.RF.dimensions$RF.max[is.infinite(Full.data.RF.dimensions$RF.max) | is.nan(Full.data.RF.dimensions$RF.max) ] <- NA
-Full.data.RF.dimensions$RF.min[is.infinite(Full.data.RF.dimensions$RF.min) | is.nan(Full.data.RF.dimensions$RF.min) ] <- NA
-
-Full.data.RF.dimensions <- Full.data.RF.dimensions %>%
-  mutate(RF.diff = RF.max/RF.min) %>%
-  unique()
-
-# Calculate response factor ratios ----------------------------------------
-# Calculate the response factor ratios using (Standards in Matrix - Water in Matrix) / (Standards in water) for each replicate.
-temp.RF.ratios <- Full.data.RF %>%
-  group_by(Metabolite.Name, Type) %>%
-  mutate(RF.mean.per_sampleID = mean(RF, na.rm = TRUE)) %>%
-  select(Replicate.Name, Metabolite.Name, Type, RF.mean.per_sampleID) %>%
-  unique()
-
-print(paste("NAs or NaNs in the calculated response factor ratios:", TRUE %in% is.na(temp.RF.ratios)))
-metabolite.issues <- temp.RF.ratios[is.nan(temp.RF.ratios$RF.mean.per_sampleID),]
-print(unique(metabolite.issues$Metabolite.Name))
-
-Full.data.RF.ratios <- temp.RF.ratios %>%
-  filter(!(is.infinite(RF.mean.per_sampleID) | is.nan(RF.mean.per_sampleID))) %>%
-  group_by(Metabolite.Name) %>% filter(n() >= 3) %>%
-  mutate(RF.ratio = ((RF.mean.per_sampleID[Type == "Standards_Matrix"] - RF.mean.per_sampleID[Type == "Water_Matrix"]) 
-                     / RF.mean.per_sampleID[Type == "Standards_Water"])) %>%
-  select(Metabolite.Name, RF.ratio) %>%
-  unique()
-
-# If applicable, supplement data with information from calculated Ingalls QE.RF ratios.
-missing.RF <- setdiff(unique(temp.RF.ratios$Metabolite.Name), Full.data.RF.ratios$Metabolite.Name)
-
-test.standards <- Ingalls.Standards %>%
-  filter(Metabolite.Name %in% missing.RF) %>%
-  rename(RF.ratio = QE.RF.ratio) %>%
-  select(Metabolite.Name, RF.ratio)
-
-Full.data.RF.ratios <- Full.data.RF.ratios %>%
-  as.data.frame() %>%
-  rbind(test.standards) %>%
-  filter(!is.na(RF.ratio)) %>%
-  mutate(RF.ratio = as.numeric(RF.ratio))
-
-currentDate = Sys.Date()
-write.csv(Full.data.RF.ratios, paste("data_intermediate/MSDIAL_ResponseFactorRatios_", currentDate, ".csv", sep = ""))
 
 # Quantify samples for the BMIS'd dataset ---------------------------------
 BMISd.data.filtered <- BMISd.data %>%
@@ -71,7 +7,6 @@ BMISd.data.filtered <- BMISd.data %>%
   left_join(Full.data.RF.ratios) %>%
   left_join(Full.data.RF.dimensions %>% select(Metabolite.Name, RF.max, RF.min) %>% unique(), by = "Metabolite.Name") %>%
   select(Metabolite.Name, FinalBMIS, Sample.Name, Adjusted.Area, everything())
-
 
 # Calculate umol/vial for compounds without an internal standard ----------
 Quantitative.data <- BMISd.data.filtered %>%
@@ -85,7 +20,7 @@ Quantitative.data <- BMISd.data.filtered %>%
 IS.key <- BMISd.data.filtered %>%
   select(FinalBMIS, Metabolite.Name) %>%
   unique() %>%
-  left_join(original.IS.key %>% select(FinalBMIS, Concentration_nM)) %>%
+  left_join(IS.key %>% select(FinalBMIS, Concentration_nM)) %>%
   filter(str_detect(FinalBMIS, Metabolite.Name))
 
 
