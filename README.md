@@ -32,7 +32,7 @@ All the necessary example data can be downloaded here: <https://drive.google.com
 
 ## Visualization
 
-![Image Title](visual/Targeted_Pipeline_Visualization.pdf)
+![Click on me to see a visual layout of the Targeted Pipeline!](visual/Targeted_Pipeline_Visualization.pdf)
 
 ## Contributing
 
