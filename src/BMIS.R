@@ -17,12 +17,6 @@ SampKey <- QCd.data %>%
   select(Replicate.Name) %>%
   mutate(Area.with.QC = ifelse(str_detect(Replicate.Name, "Half"), 0.5, 1.0)) %>%
   mutate(Mass.Feature = "Inj_vol")
-# SampKey <- SampKey.all %>%
-#   filter(Replicate.Name %in% Int.Stds.data$Replicate.Name) %>%
-#   select(Replicate.Name, Bio.Normalization) %>%
-#   mutate(Mass.Feature = "Inj_vol",
-#          Area.with.QC = Bio.Normalization) %>%
-#   select(Replicate.Name, Area.with.QC, Mass.Feature)
 
 # Create Internal standard data to identify problematic compounds/replicates ---------------------------
 Int.Stds.data <- rbind(Int.Stds.data, SampKey) %>%
@@ -35,7 +29,7 @@ write.csv(IS.Issues, paste("data_intermediate/MSDial_InternalStdIssues_", curren
 
 # Visualize raw areas of Internal Standards -------------------------------------------------------------
 IS.Raw.Area.Plot <- ggplot(Int.Stds.data, aes(x = Replicate.Name, y = Area.with.QC, color = RunType)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", position = "dodge") +
   facet_wrap( ~Mass.Feature, scales = "free_y") +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_text(size = 10),
@@ -70,13 +64,13 @@ Int.Stds.means <- Int.Stds.data %>%
   summarise(Average.Area = mean(as.numeric(Area.with.QC), na.rm = TRUE))
 
 # Normalize to each internal Standard--------------------------------------------------------------------
-Data.binded <- rbind(Int.Stds.data %>% select(-c("a", "RunType", "c", "d")), Data.long) %>%
+Data.bound <- rbind(Int.Stds.data %>% select(-c("a", "RunType", "c", "d")), Data.long) %>%
   arrange(Mass.Feature)
 
 Split_Dat <- list()
 # MIS stands for "Matched Internal Standard"
 for (i in 1:length(unique(Int.Stds.data$Mass.Feature))) {
-  Split_Dat[[i]] <- Data.binded %>%
+  Split_Dat[[i]] <- Data.bound %>%
     mutate(MIS = unique(Int.Stds.data$Mass.Feature)[i]) %>%
     left_join(Int.Stds.data %>%
                 rename(MIS = Mass.Feature, IS_Area = Area.with.QC) %>%
