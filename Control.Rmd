@@ -418,7 +418,7 @@ Summarize carbon and nitrogen.
 ***
 Inputs:
 "data_extras/Ingalls_Lab_Standards.csv"
-"data_extras/*Internal standard concentrations relevent to your run*.csv"
+"data_extras/*Internal standard concentrations relevant to your run*.csv"
 "data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
 "data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
 
@@ -444,7 +444,7 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 "BMIS.pattern" identifies the BMIS output from Section III.
 "QC.pattern" identifies the QC'd output from Section II.
 "names.pattern" identifies the Internal Standards names sheet (which will change depending on your run!).
-"Column.Type" is fairly self-explanatory.
+"Column.Type" is reverse phase or HILIC.
 
 ```{r, include = TRUE}
 # Cyano
@@ -477,7 +477,7 @@ check.duplicates <- list.files("data_intermediate", pattern = "duplicate", full.
 if (length(check.duplicates) == 0) {
   print("No HILIC data exists.")
 } else {
-  print("HILIC data exists.")
+  print("HILIC data exists, check for duplicates.")
 
   HILICS.duplicates <- read.csv(check.duplicates, stringsAsFactors = FALSE)
 }
