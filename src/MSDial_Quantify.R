@@ -14,7 +14,8 @@ Quantitative.data <- BMISd.data.filtered %>%
   mutate(umol.in.vial.ave = Adjusted.Area/RF.ave/RF.ratio,
          umol.in.vial.max = Adjusted.Area/RF.min/RF.ratio,
          umol.in.vial.min = Adjusted.Area/RF.max/RF.ratio) %>%
-  select(Metabolite.Name:Adjusted.Area, everything())
+  select(Metabolite.Name:Adjusted.Area, everything()) %>%
+  unique()
 
 # Pull out data for matched internal standards ----------------------------
 IS.key <- BMISd.data.filtered %>%
@@ -59,7 +60,7 @@ IS.sample.data <- do.call(rbind, IS.mid_frame2) %>%
   rename(Sample.Name = Replicate.Name) %>%
   select(Sample.Name:Area.with.QC, Concentration_nM, umol.in.vial_IS)
 
-rm(list = c("matched.IS.compounds", "QCd.data", "IS.mid_frame", "IS.mid_frame2"))
+rm(list = c("matched.IS.compounds", "IS.mid_frame", "IS.mid_frame2"))
 
 
 # Add matched IS_smp info back into main frame ------------------------------------------------

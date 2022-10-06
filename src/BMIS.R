@@ -96,7 +96,7 @@ Mydata.new <- Data.area.norm %>%
 Poodata1 <- Mydata.new %>%
   filter(type == "Poo") %>%
   group_by(SampID, Mass.Feature, MIS) %>%
-  summarise(RSD_ofPoo_IND = sd(Adjusted.Area, na.rm = TRUE) / mean(Adjusted.Area, na.rm = TRUE)) %>%
+  mutate(RSD_ofPoo_IND = sd(Adjusted.Area, na.rm = TRUE) / mean(Adjusted.Area, na.rm = TRUE)) %>%
   mutate(RSD_ofPoo_IND = ifelse(RSD_ofPoo_IND == "NaN", NA, RSD_ofPoo_IND)) %>%
   group_by(Mass.Feature, MIS) %>%
   summarise(RSD_ofPoo =  mean(RSD_ofPoo_IND, na.rm = TRUE)) %>%
@@ -109,7 +109,6 @@ Poodata2 <- Poodata1 %>%
 
 
 # Get the original RSD, calculate RSD change, decide if MIS is acceptable -------------------------------
-#Poodata <- left_join(Poodata, Poodata %>%
 Poodata3 <- left_join(Poodata2, Poodata2 %>%
                        filter(MIS == "Inj_vol" ) %>%
                        mutate(Orig_RSD = RSD_ofPoo) %>%
@@ -157,7 +156,7 @@ injectONlY_toPlot <- IS_toISdat %>%
   filter(MIS == "Inj_vol")
 
 ISTest_plot <- ggplot() +
-  geom_point(dat = IS_toISdat, shape = 21, color = "black", size = 2, aes(x = RSD_ofPoo, y = RSD_of_Smp, fill = accept_MIS)) +
+  geom_point(dat = IS_toISdat, shape = 21, size = 2, aes(x = RSD_ofPoo, y = RSD_of_Smp, fill = accept_MIS)) +
   geom_point(dat = injectONlY_toPlot, aes(x = RSD_ofPoo, y = RSD_of_Smp), size = 3) +
   facet_wrap(~ Mass.Feature) +
   ggtitle(paste("Results of BMIS Cutoff:", cut.off, "RSD decrease,", cut.off2, "RSD minimum."))
