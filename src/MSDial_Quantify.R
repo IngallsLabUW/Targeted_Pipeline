@@ -21,9 +21,8 @@ Quantitative.data <- BMISd.data.filtered %>%
 IS.key <- BMISd.data.filtered %>%
   select(FinalBMIS, Metabolite.Name) %>%
   unique() %>%
-  left_join(IS.key %>% select(FinalBMIS, Concentration_nM)) %>%
+  left_join(Ingalls.Standards %>% select(Metabolite.Name, Concentration_uM) %>% rename(FinalBMIS = Metabolite.Name)) %>%
   filter(str_detect(FinalBMIS, Metabolite.Name))
-
 
 # Calculate umol/vial for compounds with matched internal standards -----------------
 IS.data <- Full.stds.data %>%
@@ -31,12 +30,12 @@ IS.data <- Full.stds.data %>%
   mutate(IS_Area = Area.with.QC,
          FinalBMIS = Metabolite.Name) %>%
   select(IS_Area, FinalBMIS, Replicate.Name) %>%
-  left_join(IS.key %>% select(FinalBMIS, Metabolite.Name, Concentration_nM))
+  left_join(IS.key %>% select(FinalBMIS, Metabolite.Name, Concentration_uM))
 
 matched.IS.compounds <- data.frame(Compounds = c(IS.key[ ,"FinalBMIS"], as.character(IS.key[ ,"Metabolite.Name"])))
 
 IS.sample.data <- QCd.data %>%
-  left_join(IS.data %>% select(FinalBMIS, Metabolite.Name, Concentration_nM), by = "Metabolite.Name") %>%
+  left_join(IS.data %>% select(FinalBMIS, Metabolite.Name, Concentration_uM), by = "Metabolite.Name") %>%
   unique() %>%
   filter(Metabolite.Name %in% matched.IS.compounds$Compounds) %>%
   filter(!str_detect(Replicate.Name, "Std")) %>%
@@ -53,12 +52,12 @@ IS.mid_frame <- lapply(IS.sample.data, function(x) group_by(x, Replicate.Name))
 
 IS.mid_frame2 <- lapply(IS.mid_frame,
                         function(x) mutate(x,
-                        umol.in.vial_IS = (Area.with.QC[Std.Type == "Standard"] / Area.with.QC[Std.Type == "Internal_std"]) * (Concentration_nM[Std.Type == "Standard"]/1000)))
+                        umol.in.vial_IS = (Area.with.QC[Std.Type == "Standard"] / Area.with.QC[Std.Type == "Internal_std"]) * (Concentration_uM[Std.Type == "Standard"]/1000)))
 
 IS.sample.data <- do.call(rbind, IS.mid_frame2) %>%
   filter(!str_detect(Metabolite.Name, ",")) %>%
   rename(Sample.Name = Replicate.Name) %>%
-  select(Sample.Name:Area.with.QC, Concentration_nM, umol.in.vial_IS)
+  select(Sample.Name:Area.with.QC, Concentration_uM, umol.in.vial_IS)
 
 rm(list = c("matched.IS.compounds", "IS.mid_frame", "IS.mid_frame2"))
 

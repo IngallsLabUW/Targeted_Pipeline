@@ -24,11 +24,11 @@ QCd.data <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = F
   select(Replicate.Name, Metabolite.Name, Area.with.QC, Area.Value, Run.Type, everything())
 
 # Import Internal standards key ---------------------------------------------------------------
-filename <- RemoveCsv(list.files(path = "data_extras/", pattern = names.pattern))
-filepath <- file.path("data_extras", paste(filename, ".csv", sep = ""))
-
-IS.key <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
-  rename(FinalBMIS = Internal_Standards)
+# filename <- RemoveCsv(list.files(path = "data_extras/", pattern = names.pattern))
+# filepath <- file.path("data_extras", paste(filename, ".csv", sep = ""))
+# 
+# IS.key <- assign(make.names(filename), read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
+#   rename(FinalBMIS = Internal_Standards)
 
 # Apply appropriate filters and isolate standards ---------------------------------------------------------------
 Full.stds.data <- QCd.data %>%
