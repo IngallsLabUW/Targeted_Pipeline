@@ -134,36 +134,31 @@ print("Required files imported.")
 *User action required*
 This step changes depending on whether you are using Skyline or MSDIAL.
 
-Enter the existing filenames of your run. The above code assigns the variables in R to their filename in the directory, so if your positive Area file is "data_processed/PositiveArea.csv", it will be imported to this code as PositiveArea. Those files need to be reassigned to Area.positive so the rest of the code will know which files to edit for the pipeline steps.
+Enter the existing filenames of your run. The above chunk of code assigns the variables in R to their filename in the data_raw directory, so if your positive Area file is "data_processed/PositiveArea.csv", it has been imported to this environment as PositiveArea. Those files need to be reassigned to consistent names so the rest of the code will know which files to edit for the pipeline steps.
 
 Comment or uncomment the block of variable names appropriate for your run.
 
 ```{r Dataset reassignment, include = TRUE}
-## Comment out the run not being used.
 
-## Skyline Cyano variables:
-# skyline.RP.Cyano <- Ant18_QE_Cyano
+### Skyline ###
+## Reverse phase:
+# skyline.RP.Cyano <- Ant18_QE_ReversePhase_Skyline_Example
 
-## Skyline HILIC variables: 
-# skyline.HILIC.neg <- X181116_HILIC_neg_MESO.SCOPE_HRM
-# skyline.HILIC.pos <- X181116_HILIC_pos_MESO.SCOPE_HRM
+## HILIC: 
+# skyline.HILIC.neg <- HRM_TQS_HILICNeg_Skyline_Example
+# skyline.HILIC.pos <- HRM_TQS_HILICPos_Skyline_Example
 
-## MSDIAL Cyano variables: 
-# Area.RP.Cyano <- Area_CYANO_Example
-# Mz.RP.Cyano   <- Mz_CYANO_Example
-# RT.RP.Cyano   <- RT_CYANO_Example
-# SN.RP.Cyano   <- SN_CYANO_Example
+### MSDIAL ###
+## HILIC:
+Area.positive <- MESOSCOPE_Area_HILICPos_MSDIAL_Example
+Mz.positive   <- MESOSCOPE_Mz_HILICPos_MSDIAL_Example
+RT.positive   <- MESOSCOPE_RT_HILICPos_MSDIAL_Example
+SN.positive   <- MESOSCOPE_SN_HILICPos_MSDIAL_Example
 
-## MSDIAL HILIC variables: 
-Area.positive <- Area_HILICPos_Example
-Mz.positive   <- Mz_HILICPos_Example
-RT.positive   <- RT_HILICPos_Example
-SN.positive   <- SN_HILICPos_Example
-
-Area.negative <- Area_HILICNeg_Example
-Mz.negative   <- Mz_HILICNeg_Example
-RT.negative   <- RT_HILICNeg_Example
-SN.negative   <- SN_HILICNeg_Example
+Area.negative <- MESOSCOPE_Area_HILICNeg_MSDIAL_Example
+Mz.negative   <- MESOSCOPE_Mz_HILICNeg_MSDIAL_Example
+RT.negative   <- MESOSCOPE_RT_HILICNeg_MSDIAL_Example
+SN.negative   <- MESOSCOPE_SN_HILICNeg_MSDIAL_Example
 
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
