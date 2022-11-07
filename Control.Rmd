@@ -11,7 +11,7 @@ editor_options:
 
 This markdown script controls the targeted pipeline for targeted data. 
 The script handles data from both QE and TQS instruments, 
-as well as data processed by Skyline and MSDial metabolomics processing platforms.
+as well as data processed by Skyline and MSDIAL metabolomics processing platforms.
 
 It contains four major sections: 
 Section I: Import and cleaning/rearranging of data.
@@ -20,11 +20,13 @@ Section III: Applying Best-Matched Internal Standard (B-MIS).
 Section IV: Quantifying peak area to umol/vial when possible.
 
 In order to run this script, you will need the following items:
-1. The instrument output in csv format from either MSDial or Skyline.
+1. The instrument output in csv format from either MSDIAL or Skyline.
 2. The Ingalls Standards sheet, located on the Ingalls GitHub: https://github.com/IngallsLabUW/Ingalls_Standards
 
 *This is a template for the Ingalls Targeted Pipeline! You will need to adjust it to reflect your data!*
 *You will NEVER be able to just plug in data and have this work!*
+
+If you are running this pipeline for the first time, the first chunk (below) will populate your directory with a series of empty folders (data_raw, data_intermediate, etc) that will be used throughout the pipeline. You will need to fill the data_extras and data_raw folders with the appropriate files, either from the Ingalls Google Drive (see) if you are running the template, or with your own data for real analysis.
 
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -68,14 +70,14 @@ print("Subdirectories emptied.")
 ```
 
 ----------------------------------------------------------------------------------------------------------------------------
-Section I: Import all MSDial files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN). 
-Or, import your single Skyline file in long format. Once files are imported and cleaned, ensure that the compound names are 
-updated with the latest Ingalls Standards sheet.
+Section I: 
+For MSDIAL, import all MSDIAL files that have been split by Area, Mass/charge (Mz), Retention Time (RT), and Signal to Noise (SN). 
+For Skyline, import your single Skyline file which should be in long format. Once files are imported and cleaned, ensure that the compound names are updated with the latest Ingalls Standards sheet.
 
-Steps for MSDial data:
+Steps for MSDIAL data:
 Set header, filter unknowns.
 Change variable classes from character/factor to numeric, according to column.
-Rearrange the dataframes and combine to a single frame in long format.
+Rearrange the data frames and combine to a single frame in long format.
 Standardize dataset by removing "Ingalls_" prefixes from compound names, and removing the syntactically correct "X" from the Replicates column.
 
 For Skyline data:
@@ -89,47 +91,37 @@ Outputs:
 ***
 
 *User action required*
-Comment or uncomment the file.pattern, software.pattern, instrument.pattern, and matching.pattern required for your files.
-The file.pattern is the variable that will help the program pick out the correct file from the data_raw folder, and may need to be changed by the user according to the filename. It should be unique to the file(s) you want to analyze. 
-The instrument.pattern refers to which instrument was used to analyze the data.
+Comment or uncomment the file.pattern, software.pattern, instrument.pattern, and runtype.pattern required for your files.
 
-TODO check that this is correct
-The matching.pattern and software.pattern variables *should not be changed by the user*, only commented or uncommented.
+The instrument.pattern refers to which instrument was used to analyze the data. Choose either "QE" or "TQS".
+The software.pattern refers to MSDIAL or Skyline. Choose either "MSDIAL" or "Skyline".
+The file.pattern is a user-defined variable that will help the program pick out the correct file from the data_raw folder. It should be unique to the file(s) you want to analyze.
+The runtype.pattern refers to whether the data is HILIC (pos/neg) or Reverse Phase. Choose either "pos|neg" for HILIC or "reversephase" for reverse phase.
+
+
 ```{r Pattern matching, include = TRUE}
-### Choose software pattern ###
-# MSDial
-software.pattern <- "MSDial"
-
-## Skyline
-# software.pattern <- "Skyline"
-
-####################################
-
 ### Choose instrument pattern ###
-# QE
+## QE or TQS
 instrument.pattern <- "QE"
-
-# TQS
 # instrument.pattern <- "TQS"
 
-####################################
+### Choose software pattern ###
+## MSDIAL or Skyline
+software.pattern <- "MSDIAL"
+# software.pattern <- "Skyline"
 
 ### Create file pattern ###
-file.pattern <- "Example"
-
-####################################
+file.pattern <- "MESOSCOPE"
 
 ### Choose matching pattern ###
-# Cyano 
-# matching.pattern <- "Cyano"
-
-# HILIC
-matching.pattern <- "pos|neg"
+# Reverse phase or HILIC
+# runtype.pattern <- "reversephase"
+runtype.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
 print(paste("Your file matching pattern is:", file.pattern))
-print(paste("Your run type is:", matching.pattern))
+print(paste("Your run type is:", runtype.pattern))
 ```
 
 
@@ -140,7 +132,7 @@ print("Required files imported.")
 ```
 
 *User action required*
-This step changes depending on whether you are using Skyline or MSDial.
+This step changes depending on whether you are using Skyline or MSDIAL.
 
 Enter the existing filenames of your run. The above code assigns the variables in R to their filename in the directory, so if your positive Area file is "data_processed/PositiveArea.csv", it will be imported to this code as PositiveArea. Those files need to be reassigned to Area.positive so the rest of the code will know which files to edit for the pipeline steps.
 
@@ -156,13 +148,13 @@ Comment or uncomment the block of variable names appropriate for your run.
 # skyline.HILIC.neg <- X181116_HILIC_neg_MESO.SCOPE_HRM
 # skyline.HILIC.pos <- X181116_HILIC_pos_MESO.SCOPE_HRM
 
-## MSDial Cyano variables: 
+## MSDIAL Cyano variables: 
 # Area.RP.Cyano <- Area_CYANO_Example
 # Mz.RP.Cyano   <- Mz_CYANO_Example
 # RT.RP.Cyano   <- RT_CYANO_Example
 # SN.RP.Cyano   <- SN_CYANO_Example
 
-## MSDial HILIC variables: 
+## MSDIAL HILIC variables: 
 Area.positive <- Area_HILICPos_Example
 Mz.positive   <- Mz_HILICPos_Example
 RT.positive   <- RT_HILICPos_Example
@@ -176,10 +168,10 @@ SN.negative   <- SN_HILICNeg_Example
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
 
-Check if dataset is MSDial or Skyline, rearrange if so, and export.
+Check if dataset is MSDIAL or Skyline, rearrange if so, and export.
 ```{r Dataset rearrangement, include = TRUE}
-if (software.pattern == "MSDial") {
-  source("src/MSDial_Rearrange.R")
+if (software.pattern == "MSDIAL") {
+  source("src/MSDIAL_Rearrange.R")
   print("Data rearrange complete. Exporting file to data_intermediate.")
 } else {
   source("src/Skyline_Rearrange.R")
@@ -244,9 +236,9 @@ print("Parameter values assigned.")
 ```
 
 Run Quality Control and export.
-```{r MSDial and Skyline QC, include=TRUE}
-if (software.pattern == "MSDial") {
-  source("src/MSDial_QC.R")
+```{r MSDIAL and Skyline QC, include=TRUE}
+if (software.pattern == "MSDIAL") {
+  source("src/MSDIAL_QC.R")
 } else {
   source("src/Skyline_QC.R")  
 }
@@ -303,8 +295,8 @@ Outputs:
 "figures/IS.Raw.Areas.png"
 "figures/BMIS_Evalution.png"
 "data_intermediate/*instrument.pattern*_InternalStdIssues_*DATE*.csv"
-"data_intermediate/MSDial_QuickReport_*file.pattern*_*DATE*.txt"
-"data_processed/MSDial_BMIS_Output_*file.pattern*_*DATE*.csv"
+"data_intermediate/MSDIAL_QuickReport_*file.pattern*_*DATE*.txt"
+"data_processed/MSDIAL_BMIS_Output_*file.pattern*_*DATE*.csv"
 ***
 
 *User action required*
@@ -323,8 +315,8 @@ print("B-MIS Cutoff values assigned.")
 Comment out appropriate variable blocks according to HILIC or Cyano data.
 ```{r Cyano HILIC assignment, include = TRUE}
 
-# MSDial
-software.pattern <- "MSDial"
+# MSDIAL
+software.pattern <- "MSDIAL"
 
 # Skyline
 #software.pattern <- "Skyline"
@@ -334,7 +326,7 @@ software.pattern <- "MSDial"
 # standards.pattern = "Ingalls"
 # QC.pattern = "QC_Output_CyanoAq"
 
-# Cyano MSDial
+# Cyano MSDIAL
 # Column.Type = "RP"
 # standards.pattern = "Ingalls"
 # QC.pattern = "QC_Output_CYANO"
@@ -344,7 +336,7 @@ software.pattern <- "MSDial"
 # standards.pattern = "Ingalls"
 # QC.pattern = "QC_Output_HILIC"
 
-# HILIC MSDial
+# HILIC MSDIAL
 Column.Type = "HILIC"
 standards.pattern = "Ingalls"
 QC.pattern = "QC_Output_HILIC"
@@ -420,10 +412,10 @@ Inputs:
 "data_extras/Ingalls_Lab_Standards.csv"
 "data_extras/*Internal standard concentrations relevant to your run*.csv"
 "data_processed/BMIS_Output_*file.pattern*_*DATE*.csv"
-"data_processed/MSDial_QC_Output_*file.pattern*_*DATE*.csv"
+"data_processed/MSDIAL_QC_Output_*file.pattern*_*DATE*.csv"
 
 Outputs:
-"data_intermediate/MSDial_ResponseFactorRatios_*DATE*.csv"
+"data_intermediate/MSDIAL_ResponseFactorRatios_*DATE*.csv"
 "data_processed/Quantified_Summary_*Column.Type*_*DATE*.csv
 "data_processed/Quantified_Measurements*Column.Type*_*DATE*.csv
 "data_processed/Quantified_perSampID_*Column.Type*_*DATE*.csv
@@ -465,7 +457,7 @@ print(paste(file.pattern, "matching patterns assigned."))
 
 Import required files for quantification.
 ```{r Quantify imports, include = TRUE}
-source("src/MSDial_Quantify_Imports.R")
+source("src/MSDIAL_Quantify_Imports.R")
 
 print("Quantification files imported.")
 ```
@@ -520,7 +512,7 @@ write.csv(Full.data.RF.ratios, paste("data_intermediate/MSDIAL_ResponseFactorRat
 
 Quantify.
 ```{r, include = TRUE}
-source("src/MSDial_Quantify.R")
+source("src/MSDIAL_Quantify.R")
 ```
 
 Review the "Final" files to ensure everything is correct.

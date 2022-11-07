@@ -1,4 +1,5 @@
 ## Function definitions ##
+
 ChangeClasses <- function(df, start.column, end.column) {
   # Change specified columns from factors to numeric.
   #
@@ -189,8 +190,6 @@ StandardizeMetabolites <- function(df) {
 }
 
 TrimWhitespace <- function (x) gsub("^\\s+|\\s+$", "", x)
-
-
 
 CheckFragments <- function(skyline.file, runtype) { 
   # Modifies transformed skyline output to prepare for standard ion ratio detection by running several tests.
