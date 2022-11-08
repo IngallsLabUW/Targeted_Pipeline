@@ -1,6 +1,6 @@
 # Skyline TQS + QE Quality Control
 
-# Import datafiles and accompanying master files --------------------------------------------------------------
+# Import data files and accompanying master files --------------------------------------------------------------
 filenames <- RemoveCsv(list.files(path = "data_intermediate", pattern = file.pattern))
 filepath <- file.path("data_intermediate", paste(filenames, ".csv", sep = ""))
 skyline.output <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) 
@@ -156,8 +156,7 @@ if (instrument.pattern == "TQS") {
     left_join(skyline.output %>% filter(str_detect(Replicate.Name, "Smp|Poo")))
   
   # Ion Ratio Flags  ---------------------------------------
-  # If the Ion Ratio falls outside of the IR.Table range +/- the
-  # IR.flex value, add a flag.
+  # If the Ion Ratio falls plus or minus this valueoutside of the IR.Table range, add a flag.
   all.samples <- all.samples %>%
     group_by(Precursor.Ion.Name) %>%
     mutate(IR.Ratio = ifelse(TRUE %in% Significant.Size, (Area[Quan.Trace == TRUE] / Area[Second.Trace == TRUE]), NA)) %>%

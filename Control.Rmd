@@ -102,8 +102,8 @@ The runtype.pattern refers to whether the data is HILIC (pos/neg) or Reverse Pha
 ```{r Pattern matching, include = TRUE}
 ### Choose instrument pattern ###
 ## QE or TQS
-# instrument.pattern <- "QE"
-instrument.pattern <- "TQS"
+instrument.pattern <- "QE"
+# instrument.pattern <- "TQS"
 
 ### Choose software pattern ###
 ## MSDIAL or Skyline
@@ -111,12 +111,12 @@ instrument.pattern <- "TQS"
 software.pattern <- "Skyline"
 
 ### Create file pattern ###
-file.pattern <- "HRM_TQS_ReversePhase"
+file.pattern <- "Ant18_QE_HILIC"
 
 ### Choose matching pattern ###
 # Reverse phase or HILIC
-runtype.pattern <- "reversephase"
-# runtype.pattern <- "pos|neg"
+# runtype.pattern <- "reversephase"
+runtype.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
@@ -142,11 +142,11 @@ Comment or uncomment the block of variable names appropriate for your run.
 
 ### Skyline ###
 ## Reverse phase:
-skyline.reversephase <- HRM_TQS_ReversePhase_Skyline_Example
+# skyline.reversephase <- Ant18_QE_HILICNeg_Skyline_Example
 
 ## HILIC: 
-# skyline.HILIC.pos <- HRM_TQS_HILICPos_Skyline_Example
-# skyline.HILIC.neg <- HRM_TQS_HILICNeg_Skyline_Example
+skyline.HILIC.pos <- Ant18_QE_HILICPos_Skyline_Example
+skyline.HILIC.neg <- Ant18_QE_HILICNeg_Skyline_Example
 
 ### MSDIAL ###
 ## HILIC:
@@ -186,7 +186,7 @@ Import files.
 Identify run types and check if all are present (blk, smp, std, poo).
 Create a table of standard retention times (RT) for comparison.
 Create a table of areas from blank runs for comparison.
-Flag peaks in the dataset that fall outside of user-defined bounds.
+Flag peaks in the dataset that fall outside of user-defined parameters.
 Add parameter values to the top of the final file and save to the data_processed/ folder.
 
 Additional TQS step:
