@@ -86,7 +86,8 @@ update.names <- combined.semifinal2 %>%
   rename(Compound_Name_Original = Metabolite.Name) %>%
   left_join(Ingalls.Standards %>% select(Compound_Name, Compound_Name_Original)) %>%
   rename(Compound.Name_new = Compound_Name,
-         Metabolite.Name = Compound_Name_Original)
+         Metabolite.Name = Compound_Name_Original) %>%
+  mutate(Compound.Name_new = if_else(is.na(Compound.Name_new), Metabolite.Name, Compound.Name_new)) 
 
 combined.final <- combined.semifinal2 %>%
   left_join(update.names) %>%

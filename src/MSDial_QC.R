@@ -1,8 +1,8 @@
-# Quality control script
+# Quality control script for MSDIAL data
 
 # Import files  ----------------------------
-filename <- RemoveCsv(list.files(path = 'data_intermediate/', pattern = file.pattern))
-filepath <- file.path('data_intermediate', paste(filename, ".csv", sep = ""))
+filename <- RemoveCsv(list.files(path = "data_intermediate/", pattern = file.pattern))
+filepath <- file.path("data_intermediate", paste(filename, ".csv", sep = ""))
 
 combined <- assign(make.names(filename), 
                    read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)) %>%
