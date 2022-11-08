@@ -111,9 +111,8 @@ Phase.
 Find the Ion Ratio by dividing the area of the quantitative trace by the
 area of the secondary trace for standards, and use these ratios to
 create a reference table. Deviations from this reference table that are
-larger than the user-defined values will be flagged.
-
-0.3
+larger than the user-defined values will be flagged. 0.3, HILIC and
+Reverse Phase.
 
 ## Visualization
 

@@ -1,11 +1,23 @@
 ## Skyline Rearrange and Compound Name Check
 
+# Define custom file name for export
+csvFileName <- paste("data_intermediate/", software.pattern, "_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
+
 # Function to remove syntactically incorrect values usually produced by Skyline
 replace_nonvalues <- function(x) (gsub("#N/A", NA, x))
 
-# Define custom file name
-csvFileName <- paste("data_intermediate/", software.pattern, "_combined_", file.pattern, "_", currentDate, ".csv", sep = "")
+# Replace original compound names with updated Standards names
+update_compound_names <- function(df) {
+  names.changed <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
+                                stringsAsFactors = FALSE, header = TRUE) %>%
+    select(Compound_Name, Compound_Name_Original) %>%
+    unique() %>%
+    full_join(df %>% rename(Compound_Name_Original = Precursor.Ion.Name)) %>%
+    filter(Compound_Name_Original %in% df$Precursor.Ion.Name) %>%
+    select(Precursor.Ion.Name = Compound_Name, everything(), -Compound_Name_Original)
+}
 
+# Identify positive and negative HILIC runs
 if (runtype.pattern == "pos|neg") {
   
   skyline.HILIC.pos <- skyline.HILIC.pos %>%
@@ -21,7 +33,11 @@ if (runtype.pattern == "pos|neg") {
   # Change variable classes
   skyline.classes.changed <- ChangeClasses(combined.skyline, start.column = 3, end.column = 7) 
   
-  write.csv(skyline.classes.changed, csvFileName, row.names = FALSE)
+  # Fix old compound names
+  skyline.names.updated <- update_compound_names(skyline.classes.changed)
+  
+  # Export rearranged dataframe
+  write.csv(skyline.names.updated, csvFileName, row.names = FALSE)
   
 } else {
   
@@ -31,9 +47,10 @@ if (runtype.pattern == "pos|neg") {
   # Change variable classes
   skyline.classes.changed <- ChangeClasses(skyline.reversephase.nonvalues, start.column = 4, end.column = 8) 
   
-  skyline.RP.Cyano <- skyline.classes.changed
-  rm(skyline.classes.changed)
+  # Fix old compound naames
+  skyline.names.updated <- update_compound_names(skyline.classes.changed)
   
-  write.csv(skyline.RP.Cyano, csvFileName, row.names = FALSE)
+  # Export rearranged dataframe
+  write.csv(skyline.names.updated, csvFileName, row.names = FALSE)
   
 }

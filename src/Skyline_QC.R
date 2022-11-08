@@ -1,6 +1,6 @@
 # Skyline TQS + QE Quality Control
 
-# Import data files and accompanying master files --------------------------------------------------------------
+# Import data files and any accompanying master files --------------------------------------------------------------
 filenames <- RemoveCsv(list.files(path = "data_intermediate", pattern = file.pattern))
 filepath <- file.path("data_intermediate", paste(filenames, ".csv", sep = ""))
 skyline.output <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) 
@@ -18,20 +18,18 @@ skyline.runtypes <- IdentifyRunTypes(skyline.output)
 
 # Filter out redundant standard mixes in HILIC runs ---------------------------------------------------------------
 if ("Column" %in% colnames(skyline.output)) {
-  Internal.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards_NEW.csv",
+  Ingalls.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                                  stringsAsFactors = FALSE, header = TRUE) %>%
-    filter(Column == "HILIC") %>%
-    filter(Compound.Name %in% skyline.output$Precursor.Ion.Name) %>% # tidy this once it's complete
-    rename(Precursor.Ion.Name = Compound.Name) %>%
-    select(Precursor.Ion.Name, HILICMix) %>%
+    filter(Compound_Name %in% skyline.output$Precursor.Ion.Name) %>% 
+    select(Precursor.Ion.Name = Compound_Name, HILIC_Mix) %>%
     unique()
-  skyline.output.nostds <- skyline.output %>%
-    filter(!str_detect(Replicate.Name, "Std"))
+  # skyline.output.nostds <- skyline.output %>%
+  #   filter(!str_detect(Replicate.Name, "Std"))
   skyline.output.std <- skyline.output %>%
     filter(str_detect(Replicate.Name, "Std")) %>%
-    left_join(Internal.Standards) %>%
-    filter(str_detect(Replicate.Name, as.character(HILICMix)) | str_detect(Replicate.Name, regex("H2OinMatrix", ignore_case = TRUE))) %>% 
-    select(-HILICMix)
+    left_join(Ingalls.Standards) %>%
+    filter(str_detect(Replicate.Name, as.character(HILIC_Mix)) | str_detect(Replicate.Name, regex("H2OinMatrix", ignore_case = TRUE))) %>% 
+    select(-HILIC_Mix)
   skyline.output <- skyline.output.std %>%
     rbind(skyline.output.nostds) %>%
     arrange(Precursor.Ion.Name)
