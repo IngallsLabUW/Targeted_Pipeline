@@ -64,6 +64,8 @@ The first few chunks of the Control.Rmd script will create empty folders for dif
 
 All the necessary example data can be downloaded here: <https://drive.google.com/drive/folders/1E-B4dyDTkwOfupHJK0uL8BgKj586OU31>
 
+If you do not have access to this drive, please contact the owners of this repository.
+
 > #### User-Defined QC Parameters {#user-defined-QC-paramters}
 
 These parameters will change depending on your data and level of stringency. Below are the "default" values.
