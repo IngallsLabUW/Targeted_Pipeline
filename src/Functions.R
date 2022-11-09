@@ -210,7 +210,7 @@ CheckFragments <- function(skyline.file, runtype) {
     filter(str_detect(Replicate.Name, runtype)) %>%
     select(Replicate.Name, Precursor.Ion.Name, Area, Precursor.Mz, Product.Mz)
   
-  fragment.unique <-unique(fragment.check %>% select(Precursor.Ion.Name, Precursor.Mz, Product.Mz))
+  fragment.unique <- unique(fragment.check %>% select(Precursor.Ion.Name, Precursor.Mz, Product.Mz))
   
   fragment.multi.unique <- fragment.unique %>%
     dplyr::count(Precursor.Ion.Name) %>%

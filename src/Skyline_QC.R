@@ -8,27 +8,25 @@ skyline.output <- assign(make.names(filenames), read.csv(filepath, stringsAsFact
 if (instrument.pattern == "TQS") {
   filenames <- RemoveCsv(list.files(path = "data_extras", pattern = "master", ignore.case = TRUE))
   filepath <- file.path("data_extras", paste(filenames, ".csv", sep = ""))
-  master.file <- assign(make.names(filenames), read.csv(filepath, stringsAsFactors = FALSE)) %>%
-    dplyr::rename(Second.Trace = X2nd.trace)
+  master.file <- read.csv(filepath, stringsAsFactors = FALSE) %>%
+    rename(Second.Trace = X2nd.trace)
 }
 
 # Sanity check for runtypes  ---------------------------------------------------------------------
-# Stop program if this run has more or fewer runtypes than the normal std, blk, poo, and smp.
+# Stop analysis if this run has more or fewer runtypes than the normal four: std, blk, poo, and smp.
 skyline.runtypes <- IdentifyRunTypes(skyline.output)
 
 # Filter out redundant standard mixes in HILIC runs ---------------------------------------------------------------
-if ("Column" %in% colnames(skyline.output)) {
+if ("Column" %in% colnames(skyline.output) & TRUE %in% grepl("Mix", skyline.output$Replicate.Name)) {
   Ingalls.Standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                                  stringsAsFactors = FALSE, header = TRUE) %>%
-    filter(Compound_Name %in% skyline.output$Precursor.Ion.Name) %>% 
+    filter(Compound_Name %in% skyline.output$Precursor.Ion.Name) %>%
     select(Precursor.Ion.Name = Compound_Name, HILIC_Mix) %>%
     unique()
-  # skyline.output.nostds <- skyline.output %>%
-  #   filter(!str_detect(Replicate.Name, "Std"))
   skyline.output.std <- skyline.output %>%
     filter(str_detect(Replicate.Name, "Std")) %>%
     left_join(Ingalls.Standards) %>%
-    filter(str_detect(Replicate.Name, as.character(HILIC_Mix)) | str_detect(Replicate.Name, regex("H2OinMatrix", ignore_case = TRUE))) %>% 
+    filter(str_detect(Replicate.Name, as.character(HILIC_Mix)) | str_detect(Replicate.Name, regex("H2OinMatrix", ignore_case = TRUE))) %>%
     select(-HILIC_Mix)
   skyline.output <- skyline.output.std %>%
     rbind(skyline.output.nostds) %>%
@@ -37,7 +35,7 @@ if ("Column" %in% colnames(skyline.output)) {
 
 # Depending on instrument.pattern, create comparison tables --------------------------------------
 
-if (instrument.pattern == "TQS") {
+if ("Precursor" %in% colnames(skyline.output)) {
   # Check for fragments in TQS data.
   fragments.checked <- CheckFragments(skyline.output, runtype = "Std") 
   
@@ -56,7 +54,7 @@ if (instrument.pattern == "TQS") {
     mutate(IR.min = min(Std.Ion.Ratio, na.rm = TRUE)) %>%
     mutate(IR.max = max(Std.Ion.Ratio, na.rm = TRUE)) %>%
     select(Precursor.Ion.Name, IR.min, IR.max) %>%
-    unique()
+    unique() 
   
   # Blank Table
   # Isolate the blanks in the sample and add a column with maximum blank for each Precursor ion name.
@@ -97,17 +95,18 @@ if (instrument.pattern == "TQS") {
   
 } else{
   
-  print(paste("This is a", instrument.pattern, "run. No fragmentation check necessary."))
+  print("This run does not require a fragmentation check.")
   
   # Blank Table
   blank.table <- skyline.output %>%
     filter(str_detect(Replicate.Name, regex("Blk", ignore_case = TRUE))) %>%
     select(Precursor.Ion.Name, Area) %>%
     group_by(Precursor.Ion.Name) %>% 
-    filter(Area == max(Area)) %>%
-    rename(Blank.max = Area) %>%
+    mutate(Blk.min = min(Area)) %>%
+    mutate(Blk.max = max(Area)) %>%
+    select(-Area) %>%
     unique()
-  
+    
   # Height
   # Isolate all pooled and sample heights
   height.table <- skyline.output %>%
@@ -129,7 +128,7 @@ RT.table <- skyline.output %>%
   unique()
 
 # Area  
-# Isolate all pooled and sample Areas.
+# Isolate all pooled and sample areas.
 area.table <- skyline.output %>%
   select(Replicate.Name, Precursor.Ion.Name, Area) %>%
   filter(str_detect(Replicate.Name, regex("Smp|Poo", ignore_case = TRUE)))
@@ -145,7 +144,7 @@ SN.table <- skyline.output %>%
 
 # Construct final comparative table ---------------------------------------
 
-if (instrument.pattern == "TQS") {
+if ("Precursor" %in% colnames(skyline.output)) {
   all.standards <- CheckFragments(skyline.output, runtype = "Std") 
   
   all.samples <- CheckFragments(skyline.output, runtype = "Smp")
@@ -182,15 +181,7 @@ RT.flags.added <- all.samples %>%
 Blank.flags.added <- RT.flags.added %>%
   left_join(blank.table) %>%
   group_by(Precursor.Ion.Name) %>%
-  mutate(Blank.Reference = Area / Blank.max) %>%
-  ########################333
-  mutate(Protein.Name = ifelse(str_detect(Replicate.Name, ","), "Internal Std", "Non IS")) %>%
-  ##############################
-  mutate(blank.Flag = ifelse(((Protein.Name != "Internal Std") & ((Area / Blank.max) < blk.thresh)), 
-                             "blank.Flag", 
-                             ifelse(((Protein.Name == "Internal Std") & ((Area / Blank.max) < blk.thresh)),
-                                    "IS.blank.Flag", NA)))
-
+  mutate(Blank.Reference = Area / Blank.max)
 
 # Height Flags  ---------------------------------------
 # Add a height.min.flag if the Height falls below the min.height
@@ -224,45 +215,19 @@ semifinal.table <- semifinal.table %>%
 semifinal.table$all.Flags <- gsub('^\\,|\\,$', '', semifinal.table$all.Flags)
 
 final.table <- semifinal.table %>%
-  select(Replicate.Name:Mass.Error.PPM, contains("Flag"))
-final.table[final.table==""]<-NA
+  select(Replicate.Name:all.Flags, contains("Flag"))
+final.table[final.table==""] <- NA
 
 
 # Remove Secondary trace ---------------------------------------
 # Filter rows where Second.Trace == TRUE, keeping only Quan.Trace.
 # Remove columns once finished.
-if (instrument.pattern == "TQS") {
+if ("Precursor" %in% colnames(skyline.output)){
   final.table <- final.table %>%
     filter(Quan.Trace == TRUE) %>%
     select(Replicate.Name:Area, Retention.Time:all.Flags)
 }
 
-
-# Standards & blank addition  ---------------------------------------
-# Test for standards and blanks in the run. Add those standards
-# and blanks back into the final table.
-# 
-# Stds.test <- grepl("_Std_", skyline.output$Replicate.Name)
-# Blks.test <- grepl("_Blk_", skyline.output$Replicate.Name)
-# 
-# if (any(Stds.test == TRUE)) {
-#   print("There are standards in this run. Joining to the bottom of the dataset!", quote = FALSE)
-#   final.table <- JoinStandardsBlanks(skyline.output, machine = instrument.pattern, runtype = "Std")
-# } else {
-#   print("No standards exist in this set.")
-# }
-# 
-# if (any(Blks.test == TRUE)) {
-#   print("There are blanks in this run. Joining to the bottom of the dataset!", quote = FALSE)
-#   final.table <- JoinStandardsBlanks(skyline.output, machine = instrument.pattern, runtype = "Blk")
-# } else {
-#   print("No blanks exist in this set.")
-# }
-
-# Rename and save  ---------------------------------------
-# Add comments restating the given QC parameters. Save to 
-# current working directory with a new name, 
-# "TQSQC_<original file name>.csv
 
 # Print to file with comments and a new name ------------------------------
 if (instrument.pattern == "TQS") {
@@ -299,12 +264,3 @@ final.table <- bind_rows(df, final.table)
 rm(list = setdiff(ls()[!ls() %in% c("software.pattern", "file.pattern", "instrument.pattern",
                                     "final.table", "ion.ratio.table", "RT.table", "blank.table",
                                     "height.table", "area.table", "SN.table")], lsf.str()))
-
-
-
-
-
-
-
-
-

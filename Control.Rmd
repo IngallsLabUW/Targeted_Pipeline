@@ -24,7 +24,7 @@ In order to run this script, you will need the following items:
 2. The Ingalls Standards sheet, located on the Ingalls GitHub: https://github.com/IngallsLabUW/Ingalls_Standards
 
 *This is a template for the Ingalls Targeted Pipeline! You will need to adjust it to reflect your data!*
-*You will NEVER be able to just plug in data and have this work!*
+*You will NEVER be able to just plug in data and have this work!!*
 
 If you are running this pipeline for the first time, the first chunk (below) will populate your directory with a series of empty folders (data_raw, data_intermediate, etc) that will be used throughout the pipeline. You will need to fill the data_extras and data_raw folders with the appropriate files, either from the Ingalls Google Drive (see) if you are running the template, or with your own data for real analysis.
 
@@ -32,6 +32,7 @@ If you are running this pipeline for the first time, the first chunk (below) wil
 knitr::opts_chunk$set(echo = TRUE)
 
 library(anytime)
+library(data.table)
 library(rlist)
 library(tidyr)
 library(tidyverse)
@@ -102,21 +103,21 @@ The runtype.pattern refers to whether the data is HILIC (pos/neg) or Reverse Pha
 ```{r Pattern matching, include = TRUE}
 ### Choose instrument pattern ###
 ## QE or TQS
-instrument.pattern <- "QE"
-# instrument.pattern <- "TQS"
+# instrument.pattern <- "QE"
+instrument.pattern <- "TQS"
 
 ### Choose software pattern ###
 ## MSDIAL or Skyline
-software.pattern <- "MSDIAL"
-# software.pattern <- "Skyline"
+# software.pattern <- "MSDIAL"
+software.pattern <- "Skyline"
 
 ### Create file pattern ###
-file.pattern <- "MESOSCOPE"
+file.pattern <- "HRM_TQS_IonRatio"
 
 ### Choose matching pattern ###
 # Reverse phase or HILIC
-# runtype.pattern <- "reversephase"
-runtype.pattern <- "pos|neg"
+runtype.pattern <- "reversephase"
+# runtype.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
@@ -142,7 +143,7 @@ Comment or uncomment the block of variable names appropriate for your run.
 
 ### Skyline ###
 ## Reverse phase:
-# skyline.reversephase <- HRM_TQS_ReversePhase_Skyline_Example
+skyline.reversephase <- HRM_TQS_IonRatio_ReversePhase_Skyline_Example
 
 ## HILIC: 
 # skyline.HILIC.pos <- HRM_TQS_HILICPos_Skyline_Example
@@ -150,15 +151,15 @@ Comment or uncomment the block of variable names appropriate for your run.
 
 ### MSDIAL ###
 ## HILIC:
-Area.positive <- MESOSCOPE_Area_HILICPos_MSDIAL_Example
-Mz.positive   <- MESOSCOPE_Mz_HILICPos_MSDIAL_Example
-RT.positive   <- MESOSCOPE_RT_HILICPos_MSDIAL_Example
-SN.positive   <- MESOSCOPE_SN_HILICPos_MSDIAL_Example
-
-Area.negative <- MESOSCOPE_Area_HILICNeg_MSDIAL_Example
-Mz.negative   <- MESOSCOPE_Mz_HILICNeg_MSDIAL_Example
-RT.negative   <- MESOSCOPE_RT_HILICNeg_MSDIAL_Example
-SN.negative   <- MESOSCOPE_SN_HILICNeg_MSDIAL_Example
+# Area.positive <- MESOSCOPE_Area_HILICPos_MSDIAL_Example
+# Mz.positive   <- MESOSCOPE_Mz_HILICPos_MSDIAL_Example
+# RT.positive   <- MESOSCOPE_RT_HILICPos_MSDIAL_Example
+# SN.positive   <- MESOSCOPE_SN_HILICPos_MSDIAL_Example
+# 
+# Area.negative <- MESOSCOPE_Area_HILICNeg_MSDIAL_Example
+# Mz.negative   <- MESOSCOPE_Mz_HILICNeg_MSDIAL_Example
+# RT.negative   <- MESOSCOPE_RT_HILICNeg_MSDIAL_Example
+# SN.negative   <- MESOSCOPE_SN_HILICNeg_MSDIAL_Example
 
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
@@ -209,20 +210,20 @@ Additional TQS Output:
 
 *User action required*
 Define parameters for quality control. These act as comparison for filtering out data.
-The numbers will change depending on whether you are analyzing HILIC vs Cyano data, or if you are measuring TQS vs QE data.
+The numbers will change depending on whether you are analyzing HILIC vs Reverse phase data, or if you are measuring TQS vs QE data.
 
 ```{r QC parameters, include = TRUE}
 # QE + TQS QC parameters
-area.min   <- 1000 # HILIC - 1000, Cyano - 5000
-RT.flex    <- 0.4 # HILIC +/- 0.4 min, Cyano +/- 0.2 min 
-blk.thresh <- 0.3 # HILIC +/- 0.3, Cyano +/- 0.2
-SN.min     <- 4 # HILIC - 4, Cyano - 4
+area.min   <- 1000 # HILIC - 1000, Reverse phase - 5000
+RT.flex    <- 0.4 # HILIC +/- 0.4 min, Reverse phase +/- 0.2 min 
+blk.thresh <- 0.3 # HILIC +/- 0.3, Reverse phase +/- 0.2
+SN.min     <- 4 # HILIC - 4, Reverse phase - 4
 
 # Additional QC parameters for Skyline TQS 
 height.min <- 1000
 height.max <- 1.0e8
 
-# Additional QC parameter for TQS 
+# Additional QC parameter for Ion Ratio TQS 
 IR.flex  <- 0.3
 
 print("Parameter values assigned.")
@@ -305,8 +306,8 @@ print("B-MIS Cutoff values assigned.")
 ```
 
 *User action required*
-Comment out appropriate variable blocks according to HILIC or Cyano data.
-```{r Cyano HILIC assignment, include = TRUE}
+Comment out appropriate variable blocks according to HILIC or Reverse phase data.
+```{r Reverse phase HILIC assignment, include = TRUE}
 
 # MSDIAL
 software.pattern <- "MSDIAL"
