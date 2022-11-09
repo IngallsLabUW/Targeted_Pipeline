@@ -29,7 +29,6 @@ if ("Column" %in% colnames(skyline.output) & TRUE %in% grepl("Mix", skyline.outp
     filter(str_detect(Replicate.Name, as.character(HILIC_Mix)) | str_detect(Replicate.Name, regex("H2OinMatrix", ignore_case = TRUE))) %>%
     select(-HILIC_Mix)
   skyline.output <- skyline.output.std %>%
-    rbind(skyline.output.nostds) %>%
     arrange(Precursor.Ion.Name)
 }
 
@@ -102,8 +101,8 @@ if ("Precursor" %in% colnames(skyline.output)) {
     filter(str_detect(Replicate.Name, regex("Blk", ignore_case = TRUE))) %>%
     select(Precursor.Ion.Name, Area) %>%
     group_by(Precursor.Ion.Name) %>% 
-    mutate(Blk.min = min(Area)) %>%
-    mutate(Blk.max = max(Area)) %>%
+    mutate(Blank.min = min(Area)) %>%
+    mutate(Blank.max = max(Area)) %>%
     select(-Area) %>%
     unique()
     
@@ -243,7 +242,7 @@ if (instrument.pattern == "TQS") {
                    "Processed on: ")
   
   Value <- c(NA, NA, height.max, height.min, area.min, RT.flex, blk.thresh, SN.min, IR.flex, Sys.time())
-} else{
+} else {
   Description <- c(as.character(anydate(Sys.Date())),
                    "Hello! Welcome to the world of Skyline QE Quality Control! ",
                    "Maximum height for a real peak: ",

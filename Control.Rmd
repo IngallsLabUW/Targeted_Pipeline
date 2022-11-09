@@ -103,21 +103,21 @@ The runtype.pattern refers to whether the data is HILIC (pos/neg) or Reverse Pha
 ```{r Pattern matching, include = TRUE}
 ### Choose instrument pattern ###
 ## QE or TQS
-# instrument.pattern <- "QE"
-instrument.pattern <- "TQS"
+instrument.pattern <- "QE"
+# instrument.pattern <- "TQS"
 
 ### Choose software pattern ###
 ## MSDIAL or Skyline
-# software.pattern <- "MSDIAL"
-software.pattern <- "Skyline"
+software.pattern <- "MSDIAL"
+# software.pattern <- "Skyline"
 
 ### Create file pattern ###
-file.pattern <- "HRM_TQS_IonRatio"
+file.pattern <- "MESOSCOPE"
 
 ### Choose matching pattern ###
 # Reverse phase or HILIC
-runtype.pattern <- "reversephase"
-# runtype.pattern <- "pos|neg"
+# runtype.pattern <- "reversephase"
+runtype.pattern <- "pos|neg"
 
 print(paste("Your software type is:", software.pattern))
 print(paste("The instrument used in this run is:", instrument.pattern))
@@ -143,7 +143,7 @@ Comment or uncomment the block of variable names appropriate for your run.
 
 ### Skyline ###
 ## Reverse phase:
-skyline.reversephase <- HRM_TQS_IonRatio_ReversePhase_Skyline_Example
+# skyline.reversephase <- HRM_TQS_ReversePhase_Skyline_Example
 
 ## HILIC: 
 # skyline.HILIC.pos <- HRM_TQS_HILICPos_Skyline_Example
@@ -151,15 +151,15 @@ skyline.reversephase <- HRM_TQS_IonRatio_ReversePhase_Skyline_Example
 
 ### MSDIAL ###
 ## HILIC:
-# Area.positive <- MESOSCOPE_Area_HILICPos_MSDIAL_Example
-# Mz.positive   <- MESOSCOPE_Mz_HILICPos_MSDIAL_Example
-# RT.positive   <- MESOSCOPE_RT_HILICPos_MSDIAL_Example
-# SN.positive   <- MESOSCOPE_SN_HILICPos_MSDIAL_Example
-# 
-# Area.negative <- MESOSCOPE_Area_HILICNeg_MSDIAL_Example
-# Mz.negative   <- MESOSCOPE_Mz_HILICNeg_MSDIAL_Example
-# RT.negative   <- MESOSCOPE_RT_HILICNeg_MSDIAL_Example
-# SN.negative   <- MESOSCOPE_SN_HILICNeg_MSDIAL_Example
+Area.positive <- MESOSCOPE_Area_HILICPos_MSDIAL_Example
+Mz.positive   <- MESOSCOPE_Mz_HILICPos_MSDIAL_Example
+RT.positive   <- MESOSCOPE_RT_HILICPos_MSDIAL_Example
+SN.positive   <- MESOSCOPE_SN_HILICPos_MSDIAL_Example
+
+Area.negative <- MESOSCOPE_Area_HILICNeg_MSDIAL_Example
+Mz.negative   <- MESOSCOPE_Mz_HILICNeg_MSDIAL_Example
+RT.negative   <- MESOSCOPE_RT_HILICNeg_MSDIAL_Example
+SN.negative   <- MESOSCOPE_SN_HILICNeg_MSDIAL_Example
 
 print(paste(file.pattern, instrument.pattern, software.pattern, "variables assigned."))
 ```
@@ -258,7 +258,7 @@ invisible(lapply(tables,
 # Write final data
 write.csv(final.table, csvFileName, row.names = FALSE)
 
-print(paste(tables, "saved to data/intermediate"))
+print(paste(tables, "saved to data_intermediate"))
 
 rm(list = setdiff(ls()[!ls() %in% c("file.pattern")], lsf.str()))
 ```
@@ -333,7 +333,7 @@ software.pattern <- "MSDIAL"
 # HILIC MSDIAL
 Column.Type = "HILIC"
 standards.pattern = "Ingalls"
-QC.pattern = "QC_Output_HILIC"
+QC.pattern = "QC_Output_MESOSCOPE"
 
 print(paste(file.pattern, "column type, software pattern, standards pattern, and QC pattern assigned."))
 ```
@@ -433,7 +433,7 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 "Column.Type" is reverse phase or HILIC.
 
 ```{r, include = TRUE}
-# Cyano
+# Reverse phase
 # BMIS.pattern = "BMIS_Output_RP"
 # QC.pattern = "QC_Output_CYANO"
 # names.pattern = "Names"
@@ -441,7 +441,7 @@ Comment out appropriate variable blocks according to HILIC or Cyano data.
 
 # HILIC
 BMIS.pattern = "BMIS_Output_HILIC"
-QC.pattern = "QC_Output_Example"
+QC.pattern = "QC_Output_MESOSCOPE"
 names.pattern = "Names"
 Column.Type = "HILIC"
 
