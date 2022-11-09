@@ -53,7 +53,7 @@ packages.table <- "
 |[`anytime`](https://cran.r-project.org/web/packages/anytime/index.html) | General purpose date converter. This package helps the user track analysis reruns and produce unique identifiers for files. |
 |[`rlist`](https://cran.r-project.org/web/packages/rlist/index.html) | Non-tabular data manipulation toolbox. |
 |[`BMIS`](https://github.com/IngallsLabUW/B-MIS-normalization) | R script for batch-specific normalization of raw peak areas. Matches measured metabolites with isotope-labeled internal standards that behave similarly during the analysis, nicknamed Best-Matched Internal Standard or B-MIS. This pipeline contains a modified script taken from the original repository. Published paper here: <https://pubs.acs.org/doi/10.1021/acs.analchem.7b04400> |
-|[`Example Data`](https://drive.google.com/drive/folders/1E-B4dyDTkwOfupHJK0uL8BgKj586OU31) | Example, pretidied data from the Ingalls Lab for learning purposes. |
+|[`Example Data`](https://drive.google.com/drive/folders/1E-B4dyDTkwOfupHJK0uL8BgKj586OU31) | Pretidied data from the Ingalls Lab for learning purposes. If you do not have access to this drive, please contact the owners of this repository.|
 "
 cat(packages.table)
 ```
